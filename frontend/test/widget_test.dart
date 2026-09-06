@@ -4,15 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:palace_professional_network/main.dart';
 
 void main() {
-  testWidgets('App renders the biodata form shell with bottom navigation',
+  testWidgets('App renders the dashboard shell with bottom navigation',
       (WidgetTester tester) async {
     await tester.pumpWidget(const PalaceProfessionalNetworkApp());
     await tester.pump();
 
-    expect(find.text('Palace Professional Network'), findsOneWidget);
+    // "Dashboard" appears in both the AppBar title and the nav bar label.
+    expect(find.text('Dashboard'), findsNWidgets(2));
     expect(find.text('Biodata Form'), findsOneWidget);
     expect(find.text('Directory'), findsOneWidget);
-    // The options request to the backend hasn't resolved yet in this test.
-    expect(find.byType(CircularProgressIndicator), findsWidgets);
+    expect(find.byType(BottomNavigationBar), findsOneWidget);
   });
 }

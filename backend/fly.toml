@@ -1,0 +1,25 @@
+app = "palace-professional-network"
+primary_region = "lhr"
+
+[build]
+
+[env]
+  PORT = "3000"
+  BIODATA_SERVICE_HOST = "127.0.0.1"
+  BIODATA_SERVICE_PORT = "3001"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[mounts]
+  source = "uploads_data"
+  destination = "/app/uploads"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

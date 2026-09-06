@@ -65,3 +65,8 @@ export const BIODATA_TCP_PATTERNS = {
   FIND_ALL: 'biodata.findAll',
   OPTIONS: 'biodata.options',
 } as const;
+
+export const AUTH_TCP_PATTERNS = {
+  REGISTER: 'auth.register',
+  LOGIN: 'auth.login',
+} as const;

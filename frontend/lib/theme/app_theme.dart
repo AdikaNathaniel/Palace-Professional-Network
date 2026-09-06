@@ -11,6 +11,8 @@ class AppColors {
   static const Color fieldBorder = Color(0xFFDDD6FE);
   static const Color textDark = Color(0xFF1E1B2E);
   static const Color textMuted = Color(0xFF6B7280);
+
+  static const List<Color> heroGradient = [violet, violetDark];
 }
 
 class AppTheme {

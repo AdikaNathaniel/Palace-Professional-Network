@@ -1,6 +1,6 @@
 export const API_BASE_URL: string =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
-  'http://localhost:3000';
+  'https://palace-professional-network-ipc.fly.dev';
 
 export function resolveImageUrl(imageUrl?: string): string {
   if (!imageUrl) return '';

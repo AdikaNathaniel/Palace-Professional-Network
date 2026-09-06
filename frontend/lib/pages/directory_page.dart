@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/biodata.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/biodata_card.dart';
 
 class DirectoryPage extends StatefulWidget {
   const DirectoryPage({super.key});
@@ -22,7 +23,12 @@ class DirectoryPageState extends State<DirectoryPage> {
   }
 
   void refresh() {
-    setState(() => _entriesFuture = ApiService.fetchAll());
+    // Block body, not `=>`: an arrow body would make the assignment
+    // expression's value (a Future) the closure's return value, which
+    // trips Flutter's "setState callback returned a Future" assertion.
+    setState(() {
+      _entriesFuture = ApiService.fetchAll();
+    });
   }
 
   @override
@@ -92,7 +98,7 @@ class DirectoryPageState extends State<DirectoryPage> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: entries.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) => _BiodataCard(entry: entries[index]),
+                    itemBuilder: (context, index) => BiodataCard(entry: entries[index]),
                   );
                 },
               ),
@@ -109,85 +115,6 @@ class DirectoryPageState extends State<DirectoryPage> {
         e.professionCategory.toLowerCase().contains(query) ||
         (e.professionSubCategory?.toLowerCase().contains(query) ?? false) ||
         e.placeOfWork.toLowerCase().contains(query);
-  }
-}
-
-class _BiodataCard extends StatelessWidget {
-  final Biodata entry;
-
-  const _BiodataCard({required this.entry});
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl = ApiService.resolveImageUrl(entry.imageUrl);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: AppColors.background,
-              backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-              child: imageUrl.isEmpty
-                  ? const Icon(Icons.person_outline, color: AppColors.violetLight)
-                  : null,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.fullName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    entry.professionSubCategory ?? entry.professionCategory,
-                    style: const TextStyle(color: AppColors.violetDark, fontSize: 13),
-                  ),
-                  const SizedBox(height: 6),
-                  _InfoRow(icon: Icons.work_outline, text: entry.placeOfWork),
-                  if (entry.phoneNumber.isNotEmpty)
-                    _InfoRow(icon: Icons.phone_outlined, text: entry.phoneNumber),
-                  if (entry.email != null && entry.email!.isNotEmpty)
-                    _InfoRow(icon: Icons.email_outlined, text: entry.email!),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _InfoRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: AppColors.textMuted),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

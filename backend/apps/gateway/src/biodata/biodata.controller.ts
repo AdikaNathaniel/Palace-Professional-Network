@@ -13,7 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { BIODATA_TCP_PATTERNS, CreateBiodataDto } from '@app/shared';
-import { BIODATA_SERVICE_CLIENT } from './biodata.constants';
+import { BIODATA_SERVICE_CLIENT } from '../clients/backend-client.constants';
 
 @Controller('biodata')
 export class BiodataController {
