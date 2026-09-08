@@ -4,6 +4,7 @@ import 'pages/biodata_form_page.dart';
 import 'pages/dashboard_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/login_page.dart';
+import 'services/api_service.dart';
 import 'services/session_service.dart';
 import 'theme/app_theme.dart';
 
@@ -33,41 +34,48 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  late Future<UserSession?> _sessionFuture;
+  bool _loading = true;
   UserSession? _session;
 
   @override
   void initState() {
     super.initState();
-    _sessionFuture = SessionService.getSession();
+    _loadSession();
+  }
+
+  Future<void> _loadSession() async {
+    final session = await SessionService.getSession();
+    if (!mounted) return;
+    ApiService.authToken = session?.token;
+    setState(() {
+      _session = session;
+      _loading = false;
+    });
   }
 
   void _onLoggedIn(UserSession session) {
+    ApiService.authToken = session.token;
     setState(() => _session = session);
   }
 
   Future<void> _onLogout() async {
     await SessionService.clearSession();
+    ApiService.authToken = null;
+    // Plain state, not a re-consulted Future: once _loading is false, this
+    // is the only source of truth, so there's no stale cached value for
+    // logout to bounce off of.
     setState(() => _session = null);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (_session != null) {
       return HomeShell(session: _session!, onLogout: _onLogout);
     }
-    return FutureBuilder<UserSession?>(
-      future: _sessionFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
-        if (snapshot.data != null) {
-          return HomeShell(session: snapshot.data!, onLogout: _onLogout);
-        }
-        return LoginPage(onLoggedIn: _onLoggedIn);
-      },
-    );
+    return LoginPage(onLoggedIn: _onLoggedIn);
   }
 }
 
@@ -96,14 +104,18 @@ class _HomeShellState extends State<HomeShell> {
     if (index == 2) _directoryKey.currentState?.refresh();
   }
 
+  void _goToDirectoryWithCategory(String category) {
+    setState(() => _currentIndex = 2);
+    _directoryKey.currentState?.applyCategoryFilter(category);
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = [
       DashboardPage(
         key: _dashboardKey,
         session: widget.session,
-        onGoToForm: () => _goToTab(1),
-        onGoToDirectory: () => _goToTab(2),
+        onCategoryTap: _goToDirectoryWithCategory,
         onLogout: widget.onLogout,
       ),
       BiodataFormPage(onSubmitted: () => _goToTab(2)),

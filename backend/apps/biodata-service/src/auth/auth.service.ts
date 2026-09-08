@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcryptjs';
@@ -12,6 +13,7 @@ const INVALID_CREDENTIALS = 'Invalid phone number or PIN.';
 export class AuthService {
   constructor(
     @InjectModel(AuthUser.name) private authUserModel: Model<AuthUserDocument>,
+    private readonly jwtService: JwtService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -33,7 +35,7 @@ export class AuthService {
     });
     await created.save();
 
-    return { phoneNumber: created.phoneNumber, fullName: created.fullName };
+    return this.buildSession(created.phoneNumber, created.fullName);
   }
 
   async login(dto: LoginDto) {
@@ -49,6 +51,11 @@ export class AuthService {
       throw new RpcException({ status: 401, message: INVALID_CREDENTIALS });
     }
 
-    return { phoneNumber: user.phoneNumber, fullName: user.fullName };
+    return this.buildSession(user.phoneNumber, user.fullName);
+  }
+
+  private buildSession(phoneNumber: string, fullName?: string) {
+    const token = this.jwtService.sign({ sub: phoneNumber });
+    return { phoneNumber, fullName, token };
   }
 }

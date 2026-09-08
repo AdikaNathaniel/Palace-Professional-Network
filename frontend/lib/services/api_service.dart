@@ -14,6 +14,13 @@ class ApiException implements Exception {
 class ApiService {
   static String get _base => ApiConfig.baseUrl;
 
+  /// Set on login/register and cleared on logout (see AuthGate in main.dart).
+  /// The biodata endpoints require this; /biodata/options does not.
+  static String? authToken;
+
+  static Map<String, String> get _authHeaders =>
+      authToken != null ? {'Authorization': 'Bearer $authToken'} : {};
+
   static Future<BiodataOptions> fetchOptions() async {
     final res = await http.get(Uri.parse('$_base/biodata/options'));
     if (res.statusCode != 200) {
@@ -25,7 +32,10 @@ class ApiService {
   }
 
   static Future<List<Biodata>> fetchAll() async {
-    final res = await http.get(Uri.parse('$_base/biodata'));
+    final res = await http.get(Uri.parse('$_base/biodata'), headers: _authHeaders);
+    if (res.statusCode == 401) {
+      throw ApiException('Your session has expired. Please log in again.');
+    }
     if (res.statusCode != 200) {
       throw ApiException('Failed to load directory (${res.statusCode}).');
     }
@@ -49,6 +59,7 @@ class ApiService {
   }) async {
     final uri = Uri.parse('$_base/biodata');
     final request = http.MultipartRequest('POST', uri)
+      ..headers.addAll(_authHeaders)
       ..fields['fullName'] = fullName
       ..fields['ageRange'] = ageRange
       ..fields['gender'] = gender

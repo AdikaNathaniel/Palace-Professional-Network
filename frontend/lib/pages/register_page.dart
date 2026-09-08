@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../models/session.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/session_service.dart';
-import '../widgets/ipc_logo.dart';
+import '../widgets/ipc_icon_round.dart';
+import '../widgets/pin_boxes_field.dart';
 
 class RegisterPage extends StatefulWidget {
   final ValueChanged<UserSession> onRegistered;
@@ -60,7 +60,10 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
+      appBar: AppBar(
+        title: const Text('Create Account'),
+        automaticallyImplyLeading: false,
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -70,7 +73,7 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Center(child: IpcLogo(maxWidth: 180)),
+                  const Center(child: IpcIconRound(radius: 48)),
                   const SizedBox(height: 24),
                   if (_error != null) ...[
                     Container(
@@ -104,36 +107,28 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: const InputDecoration(hintText: 'e.g. Mr. Vincent Kumah'),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Create a 4-digit PIN *', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  TextFormField(
+                  const Text(
+                    'Create a 4-digit PIN *',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 10),
+                  PinBoxesFormField(
                     controller: _pinController,
-                    keyboardType: TextInputType.number,
-                    obscureText: true,
-                    maxLength: 4,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(4),
-                    ],
-                    decoration: const InputDecoration(hintText: '••••', counterText: ''),
                     validator: (v) {
                       if (v == null || v.length != 4) return 'PIN must be exactly 4 digits';
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
-                  const Text('Confirm PIN *', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  TextFormField(
+                  const Text(
+                    'Confirm PIN *',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 10),
+                  PinBoxesFormField(
                     controller: _confirmPinController,
-                    keyboardType: TextInputType.number,
-                    obscureText: true,
-                    maxLength: 4,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(4),
-                    ],
-                    decoration: const InputDecoration(hintText: '••••', counterText: ''),
                     validator: (v) {
                       if (v == null || v.length != 4) return 'Please confirm your PIN';
                       if (v != _pinController.text) return 'PINs do not match';

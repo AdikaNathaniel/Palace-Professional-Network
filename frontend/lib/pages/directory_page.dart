@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/biodata.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/biodata_card.dart';
+import '../utils/profession_images.dart';
+import '../widgets/biodata_grid_card.dart';
+import 'biodata_detail_page.dart';
 
 class DirectoryPage extends StatefulWidget {
   const DirectoryPage({super.key});
@@ -15,6 +17,7 @@ class DirectoryPageState extends State<DirectoryPage> {
   late Future<List<Biodata>> _entriesFuture;
   final _searchController = TextEditingController();
   String _query = '';
+  String? _categoryFilter;
 
   @override
   void initState() {
@@ -29,6 +32,20 @@ class DirectoryPageState extends State<DirectoryPage> {
     setState(() {
       _entriesFuture = ApiService.fetchAll();
     });
+  }
+
+  /// Called from the Dashboard's profession grid, via GlobalKey, to jump
+  /// straight to a filtered view of one category.
+  void applyCategoryFilter(String category) {
+    setState(() {
+      _categoryFilter = category;
+      _query = '';
+      _searchController.clear();
+    });
+  }
+
+  void _clearCategoryFilter() {
+    setState(() => _categoryFilter = null);
   }
 
   @override
@@ -46,12 +63,12 @@ class DirectoryPageState extends State<DirectoryPage> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: TextField(
                 controller: _searchController,
                 onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
                 decoration: InputDecoration(
-                  hintText: 'Search by name, profession, or place of work',
+                  hintText: 'Search by name or profession',
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _query.isNotEmpty
                       ? IconButton(
@@ -65,6 +82,20 @@ class DirectoryPageState extends State<DirectoryPage> {
                 ),
               ),
             ),
+            if (_categoryFilter != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    avatar: const Icon(Icons.filter_alt, size: 16, color: AppColors.violet),
+                    label: Text(ProfessionImages.shortLabel(_categoryFilter!)),
+                    backgroundColor: AppColors.background,
+                    side: const BorderSide(color: AppColors.fieldBorder),
+                    onDeleted: _clearCategoryFilter,
+                  ),
+                ),
+              ),
             Expanded(
               child: FutureBuilder<List<Biodata>>(
                 future: _entriesFuture,
@@ -94,11 +125,23 @@ class DirectoryPageState extends State<DirectoryPage> {
                       ],
                     );
                   }
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  return GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.6,
+                    ),
                     itemCount: entries.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) => BiodataCard(entry: entries[index]),
+                    itemBuilder: (context, index) => BiodataGridCard(
+                      entry: entries[index],
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => BiodataDetailPage(entry: entries[index]),
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),
@@ -110,11 +153,13 @@ class DirectoryPageState extends State<DirectoryPage> {
   }
 
   bool _matches(Biodata e, String query) {
+    if (_categoryFilter != null && e.professionCategory != _categoryFilter) {
+      return false;
+    }
     if (query.isEmpty) return true;
     return e.fullName.toLowerCase().contains(query) ||
         e.professionCategory.toLowerCase().contains(query) ||
-        (e.professionSubCategory?.toLowerCase().contains(query) ?? false) ||
-        e.placeOfWork.toLowerCase().contains(query);
+        (e.professionSubCategory?.toLowerCase().contains(query) ?? false);
   }
 }
 

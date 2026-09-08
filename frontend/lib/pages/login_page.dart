@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../models/session.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/session_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/ipc_logo.dart';
+import '../widgets/ipc_icon_round.dart';
+import '../widgets/pin_boxes_field.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -74,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Center(child: IpcLogo(maxWidth: 220)),
+                  const Center(child: IpcIconRound(radius: 56)),
                   const SizedBox(height: 20),
                   const Text(
                     'Palace Professional Network',
@@ -116,18 +116,14 @@ class _LoginPageState extends State<LoginPage> {
                         (v == null || v.trim().isEmpty) ? 'Phone number is required' : null,
                   ),
                   const SizedBox(height: 16),
-                  const Text('4-digit PIN', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  TextFormField(
+                  const Text(
+                    '4-digit PIN',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 10),
+                  PinBoxesFormField(
                     controller: _pinController,
-                    keyboardType: TextInputType.number,
-                    obscureText: true,
-                    maxLength: 4,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(4),
-                    ],
-                    decoration: const InputDecoration(hintText: '••••', counterText: ''),
                     validator: (v) {
                       if (v == null || v.length != 4) return 'Enter your 4-digit PIN';
                       return null;

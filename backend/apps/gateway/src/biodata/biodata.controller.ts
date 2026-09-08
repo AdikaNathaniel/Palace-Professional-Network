@@ -5,6 +5,7 @@ import {
   Inject,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
@@ -14,6 +15,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { BIODATA_TCP_PATTERNS, CreateBiodataDto } from '@app/shared';
 import { BIODATA_SERVICE_CLIENT } from '../clients/backend-client.constants';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('biodata')
 export class BiodataController {
@@ -29,6 +31,7 @@ export class BiodataController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
@@ -61,6 +64,7 @@ export class BiodataController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll() {
     return firstValueFrom(
       this.client.send(BIODATA_TCP_PATTERNS.FIND_ALL, {}),
