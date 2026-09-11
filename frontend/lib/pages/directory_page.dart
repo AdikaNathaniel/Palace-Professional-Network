@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/biodata.dart';
+import '../models/session.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/profession_images.dart';
@@ -7,7 +8,9 @@ import '../widgets/biodata_grid_card.dart';
 import 'biodata_detail_page.dart';
 
 class DirectoryPage extends StatefulWidget {
-  const DirectoryPage({super.key});
+  final UserSession session;
+
+  const DirectoryPage({super.key, required this.session});
 
   @override
   State<DirectoryPage> createState() => DirectoryPageState();
@@ -138,7 +141,10 @@ class DirectoryPageState extends State<DirectoryPage> {
                       entry: entries[index],
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => BiodataDetailPage(entry: entries[index]),
+                          builder: (_) => BiodataDetailPage(
+                            entry: entries[index],
+                            session: widget.session,
+                          ),
                         ),
                       ),
                     ),

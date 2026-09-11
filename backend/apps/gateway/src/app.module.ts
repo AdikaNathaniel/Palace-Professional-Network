@@ -4,6 +4,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { BiodataModule } from './biodata/biodata.module';
 import { AuthModule } from './auth/auth.module';
+import { ChatModule } from './chat/chat.module';
 
 // Matches the multer diskStorage destination in biodata.controller.ts, which
 // is also resolved relative to process.cwd() (the backend/ project root).
@@ -18,6 +19,7 @@ const UPLOADS_ROOT = join(process.cwd(), 'uploads');
     }),
     BiodataModule,
     AuthModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

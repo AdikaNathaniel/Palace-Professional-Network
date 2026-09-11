@@ -63,6 +63,7 @@ export const ALL_SUB_CATEGORIES = [
 export const BIODATA_TCP_PATTERNS = {
   CREATE: 'biodata.create',
   FIND_ALL: 'biodata.findAll',
+  FIND_BY_PHONE: 'biodata.findByPhone',
   OPTIONS: 'biodata.options',
 } as const;
 

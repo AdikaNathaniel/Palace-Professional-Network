@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import '../models/biodata.dart';
+import '../models/session.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/chat_rooms.dart';
+import 'chat_page.dart';
 
 class BiodataDetailPage extends StatelessWidget {
   final Biodata entry;
+  final UserSession session;
 
-  const BiodataDetailPage({super.key, required this.entry});
+  const BiodataDetailPage({super.key, required this.entry, required this.session});
+
+  bool get _isMe => entry.phoneNumber == session.phoneNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +44,22 @@ class BiodataDetailPage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.violetDark, fontSize: 14),
           ),
+          if (!_isMe) ...[
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ChatPage(
+                    session: session,
+                    roomId: ChatRooms.dm(session.phoneNumber, entry.phoneNumber),
+                    title: entry.fullName,
+                  ),
+                ),
+              ),
+              icon: const Icon(Icons.chat_bubble_outline, size: 18),
+              label: const Text('Message'),
+            ),
+          ],
           const SizedBox(height: 24),
           _DetailCard(
             children: [

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/session.dart';
 import 'pages/biodata_form_page.dart';
+import 'pages/chats_list_page.dart';
 import 'pages/dashboard_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/login_page.dart';
@@ -93,6 +94,7 @@ class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
   final _dashboardKey = GlobalKey<DashboardPageState>();
   final _directoryKey = GlobalKey<DirectoryPageState>();
+  final _chatsKey = GlobalKey<ChatsListPageState>();
 
   void _goToTab(int index) {
     setState(() => _currentIndex = index);
@@ -102,6 +104,7 @@ class _HomeShellState extends State<HomeShell> {
   void _refreshTab(int index) {
     if (index == 0) _dashboardKey.currentState?.refresh();
     if (index == 2) _directoryKey.currentState?.refresh();
+    if (index == 3) _chatsKey.currentState?.refresh();
   }
 
   void _goToDirectoryWithCategory(String category) {
@@ -118,8 +121,9 @@ class _HomeShellState extends State<HomeShell> {
         onCategoryTap: _goToDirectoryWithCategory,
         onLogout: widget.onLogout,
       ),
-      BiodataFormPage(onSubmitted: () => _goToTab(2)),
-      DirectoryPage(key: _directoryKey),
+      BiodataFormPage(session: widget.session, onSubmitted: () => _goToTab(2)),
+      DirectoryPage(key: _directoryKey, session: widget.session),
+      ChatsListPage(key: _chatsKey, session: widget.session),
     ];
 
     return Scaffold(
@@ -142,6 +146,10 @@ class _HomeShellState extends State<HomeShell> {
           BottomNavigationBarItem(
             icon: Icon(Icons.people_outline),
             label: 'Directory',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            label: 'Chats',
           ),
         ],
       ),

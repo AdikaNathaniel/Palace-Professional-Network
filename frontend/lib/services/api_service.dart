@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../config/api_config.dart';
 import '../models/biodata.dart';
+import '../models/chat_message.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -29,6 +30,22 @@ class ApiService {
     return BiodataOptions.fromJson(
       jsonDecode(res.body) as Map<String, dynamic>,
     );
+  }
+
+  /// The logged-in user's own biodata record, if they've submitted one
+  /// before (matched server-side by phone number) - null for a first-time
+  /// submitter.
+  static Future<Biodata?> fetchMine() async {
+    final res = await http.get(Uri.parse('$_base/biodata/me'), headers: _authHeaders);
+    if (res.statusCode == 401) {
+      throw ApiException('Your session has expired. Please log in again.');
+    }
+    if (res.statusCode != 200) {
+      throw ApiException('Failed to load your biodata (${res.statusCode}).');
+    }
+    final body = jsonDecode(res.body);
+    if (body == null) return null;
+    return Biodata.fromJson(body as Map<String, dynamic>);
   }
 
   static Future<List<Biodata>> fetchAll() async {
@@ -99,6 +116,20 @@ class ApiService {
       } catch (_) {}
       throw ApiException(message);
     }
+  }
+
+  static Future<List<DmRoomPreview>> fetchDmRooms() async {
+    final res = await http.get(Uri.parse('$_base/chat/dm-rooms'), headers: _authHeaders);
+    if (res.statusCode == 401) {
+      throw ApiException('Your session has expired. Please log in again.');
+    }
+    if (res.statusCode != 200) {
+      throw ApiException('Failed to load conversations (${res.statusCode}).');
+    }
+    final list = jsonDecode(res.body) as List;
+    return list
+        .map((e) => DmRoomPreview.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   static String resolveImageUrl(String? imageUrl) {

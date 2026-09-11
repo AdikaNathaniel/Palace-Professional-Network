@@ -28,11 +28,16 @@ export class BiodataController {
 
   @MessagePattern(BIODATA_TCP_PATTERNS.CREATE)
   create(@Payload() dto: CreateBiodataDto) {
-    return this.biodataService.create(dto);
+    return this.biodataService.upsertByPhone(dto.phoneNumber, dto);
   }
 
   @MessagePattern(BIODATA_TCP_PATTERNS.FIND_ALL)
   findAll() {
     return this.biodataService.findAll();
+  }
+
+  @MessagePattern(BIODATA_TCP_PATTERNS.FIND_BY_PHONE)
+  findByPhone(@Payload() data: { phoneNumber: string }) {
+    return this.biodataService.findByPhone(data.phoneNumber);
   }
 }
