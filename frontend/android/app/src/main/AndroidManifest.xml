@@ -2,6 +2,10 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- RECORD_AUDIO (voice notes) would otherwise make Play treat a
+         microphone as required and drop mic-less devices (tablets, TVs,
+         Chromebooks) that could install earlier releases. -->
+    <uses-feature android:name="android.hardware.microphone" android:required="false"/>
     <application
         android:label="Palace Professional Network"
         android:name="${applicationName}"

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,8 +11,9 @@ import '../../theme/app_theme.dart';
 import '../../utils/chat_format.dart';
 
 /// Message input bar: text field with an emoji panel, attachment button,
-/// send button (or hold-to-record mic when empty), plus the "Replying to" /
-/// "Editing" banner above it and an upload progress line.
+/// send button (or a mic button when empty - tap to record a voice note),
+/// plus the "Replying to" / "Editing" banner above it and an upload
+/// progress line.
 class ChatComposer extends StatefulWidget {
   final TextEditingController controller;
   final String myPhone;
@@ -44,18 +46,26 @@ class ChatComposer extends StatefulWidget {
   State<ChatComposer> createState() => ChatComposerState();
 }
 
+enum _VoiceState { idle, starting, recording, recorded }
+
 class ChatComposerState extends State<ChatComposer> {
   static const _minVoiceLength = Duration(seconds: 1);
-  static const _cancelDragDistance = 100.0;
 
   final _focus = FocusNode();
   final _recorder = AudioRecorder();
+  final _preview = AudioPlayer();
+  final _previewSubs = <StreamSubscription>[];
   bool _showEmoji = false;
-  bool _recording = false;
-  bool _cancelRecording = false;
+
+  // Voice notes: tap the mic to start; while recording you can delete, stop
+  // (to listen back first) or send straight away.
+  _VoiceState _voice = _VoiceState.idle;
+  String? _voicePath;
   DateTime? _recordStart;
   Duration _recordElapsed = Duration.zero;
   Timer? _recordTimer;
+  bool _previewPlaying = false;
+  Duration _previewPosition = Duration.zero;
 
   @override
   void initState() {
@@ -64,6 +74,21 @@ class ChatComposerState extends State<ChatComposer> {
     _focus.addListener(() {
       if (_focus.hasFocus && _showEmoji) setState(() => _showEmoji = false);
     });
+    void update(VoidCallback fn) {
+      if (mounted) setState(fn);
+    }
+
+    _previewSubs.addAll([
+      _preview.onPlayerStateChanged.listen(
+        (s) => update(() => _previewPlaying = s == PlayerState.playing),
+      ),
+      _preview.onPositionChanged.listen(
+        (p) => update(() => _previewPosition = p),
+      ),
+      _preview.onPlayerComplete.listen(
+        (_) => update(() => _previewPosition = Duration.zero),
+      ),
+    ]);
   }
 
   @override
@@ -71,7 +96,13 @@ class ChatComposerState extends State<ChatComposer> {
     widget.controller.removeListener(_onText);
     _focus.dispose();
     _recordTimer?.cancel();
+    for (final s in _previewSubs) {
+      s.cancel();
+    }
+    _preview.dispose();
+    if (_voice == _VoiceState.recording) _recorder.cancel();
     _recorder.dispose();
+    _deleteVoiceFile();
     super.dispose();
   }
 
@@ -99,77 +130,160 @@ class ChatComposerState extends State<ChatComposer> {
     }
   }
 
-  Future<void> _startRecording() async {
-    if (!await _recorder.hasPermission()) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Allow microphone access to send voice messages.'),
-          ),
-        );
-      }
-      return;
-    }
-    final dir = await getTemporaryDirectory();
-    final path =
-        '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    await _recorder.start(
-      const RecordConfig(
-        encoder: AudioEncoder.aacLc,
-        bitRate: 64000,
-        sampleRate: 44100,
-      ),
-      path: path,
-    );
-    setState(() {
-      _recording = true;
-      _cancelRecording = false;
-      _recordStart = DateTime.now();
-      _recordElapsed = Duration.zero;
-    });
-    _recordTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
-      if (mounted && _recordStart != null) {
-        setState(
-          () => _recordElapsed = DateTime.now().difference(_recordStart!),
-        );
-      }
-    });
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _stopRecording() async {
-    if (!_recording) return;
+  void _deleteVoiceFile() {
+    final path = _voicePath;
+    _voicePath = null;
+    if (path != null) {
+      File(path).delete().catchError((_) => File(path));
+    }
+  }
+
+  Future<void> _startRecording() async {
+    if (_voice != _VoiceState.idle) return;
+    setState(() {
+      _voice = _VoiceState.starting;
+      _showEmoji = false;
+    });
+    _focus.unfocus();
+    try {
+      // The first time, this shows Android's permission prompt and waits
+      // for the answer - recording only starts once it's allowed.
+      if (!await _recorder.hasPermission()) {
+        setState(() => _voice = _VoiceState.idle);
+        _snack(
+          'Microphone access is off. Allow it in Settings > Apps > '
+          'Palace Professional Network > Permissions to send voice messages.',
+        );
+        return;
+      }
+      final dir = await getTemporaryDirectory();
+      final path =
+          '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: 64000,
+          sampleRate: 44100,
+        ),
+        path: path,
+      );
+      if (!mounted) return;
+      setState(() {
+        _voicePath = path;
+        _voice = _VoiceState.recording;
+        _recordStart = DateTime.now();
+        _recordElapsed = Duration.zero;
+      });
+      _recordTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
+        if (mounted && _recordStart != null) {
+          setState(
+            () => _recordElapsed = DateTime.now().difference(_recordStart!),
+          );
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _voice = _VoiceState.idle);
+      _snack('Could not start recording. Please try again.');
+    }
+  }
+
+  /// Stops the recorder and keeps the clip for preview. Returns false if the
+  /// clip was too short to keep.
+  Future<bool> _finishRecording() async {
     _recordTimer?.cancel();
     final elapsed = _recordStart == null
         ? Duration.zero
         : DateTime.now().difference(_recordStart!);
-    final cancelled = _cancelRecording;
-    setState(() {
-      _recording = false;
-      _recordStart = null;
-    });
-    final path = await _recorder.stop();
-    if (path == null) return;
-    final file = File(path);
-    if (cancelled || elapsed < _minVoiceLength) {
-      if (await file.exists()) await file.delete();
-      if (!cancelled && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Hold the mic button to record a voice message.'),
-          ),
-        );
-      }
-      return;
+    final path = await _recorder.stop() ?? _voicePath;
+    _voicePath = path;
+    _recordStart = null;
+    if (elapsed < _minVoiceLength || path == null) {
+      _deleteVoiceFile();
+      if (mounted) setState(() => _voice = _VoiceState.idle);
+      _snack('Recording too short. Tap the mic, speak, then tap send.');
+      return false;
     }
-    final bytes = await file.readAsBytes();
-    await file.delete();
-    widget.onVoiceRecorded(bytes, elapsed);
+    if (mounted) {
+      setState(() {
+        _recordElapsed = elapsed;
+        _voice = _VoiceState.recorded;
+        _previewPosition = Duration.zero;
+      });
+    }
+    return true;
+  }
+
+  Future<void> _stopRecording() async {
+    if (_voice != _VoiceState.recording) return;
+    await _finishRecording();
+  }
+
+  Future<void> _togglePreview() async {
+    final path = _voicePath;
+    if (path == null) return;
+    if (_previewPlaying) {
+      await _preview.pause();
+    } else if (_previewPosition > Duration.zero) {
+      await _preview.resume();
+    } else {
+      await _preview.play(DeviceFileSource(path));
+    }
+  }
+
+  Future<void> _discardVoice() async {
+    if (_voice == _VoiceState.recording) {
+      _recordTimer?.cancel();
+      await _recorder.cancel();
+    }
+    await _preview.stop();
+    _deleteVoiceFile();
+    if (mounted) {
+      setState(() {
+        _voice = _VoiceState.idle;
+        _recordStart = null;
+        _recordElapsed = Duration.zero;
+        _previewPosition = Duration.zero;
+      });
+    }
+  }
+
+  Future<void> _sendVoice() async {
+    if (_voice == _VoiceState.recording && !await _finishRecording()) return;
+    if (_voice != _VoiceState.recorded) return;
+    await _preview.stop();
+    final path = _voicePath;
+    final duration = _recordElapsed;
+    if (path == null) return;
+    try {
+      final bytes = await File(path).readAsBytes();
+      widget.onVoiceRecorded(bytes, duration);
+    } catch (_) {
+      _snack('Could not read the recording. Please try again.');
+    } finally {
+      _deleteVoiceFile();
+      if (mounted) {
+        setState(() {
+          _voice = _VoiceState.idle;
+          _recordElapsed = Duration.zero;
+          _previewPosition = Duration.zero;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final hasText = widget.controller.text.trim().isNotEmpty;
     final showSend = hasText || widget.editing != null;
+    final recordingUi =
+        _voice == _VoiceState.recording || _voice == _VoiceState.recorded;
     return SafeArea(
       top: false,
       child: Column(
@@ -214,49 +328,7 @@ class ChatComposerState extends State<ChatComposer> {
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.fieldBorder),
-                    ),
-                    child: _recording ? _recordingIndicator() : _inputRow(),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                showSend
-                    ? _roundButton(
-                        icon: widget.editing != null ? Icons.check : Icons.send,
-                        onTap: widget.onSend,
-                      )
-                    : GestureDetector(
-                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Hold the mic button to record, release to send.',
-                            ),
-                          ),
-                        ),
-                        onLongPressStart: (_) => _startRecording(),
-                        onLongPressMoveUpdate: (d) {
-                          final cancel =
-                              d.offsetFromOrigin.dx < -_cancelDragDistance;
-                          if (cancel != _cancelRecording)
-                            setState(() => _cancelRecording = cancel);
-                        },
-                        onLongPressEnd: (_) => _stopRecording(),
-                        child: AnimatedScale(
-                          scale: _recording ? 1.35 : 1,
-                          duration: const Duration(milliseconds: 150),
-                          child: _roundButton(icon: Icons.mic, onTap: null),
-                        ),
-                      ),
-              ],
-            ),
+            child: recordingUi ? _voiceBar() : _composeRow(showSend),
           ),
           if (_showEmoji)
             SizedBox(
@@ -271,6 +343,161 @@ class ChatComposerState extends State<ChatComposer> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _composeRow(bool showSend) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.fieldBorder),
+            ),
+            child: _inputRow(),
+          ),
+        ),
+        const SizedBox(width: 6),
+        if (showSend)
+          _roundButton(
+            icon: widget.editing != null ? Icons.check : Icons.send,
+            tooltip: widget.editing != null ? 'Save' : 'Send',
+            onTap: widget.onSend,
+          )
+        else if (_voice == _VoiceState.starting)
+          const SizedBox(
+            width: 48,
+            height: 48,
+            child: Padding(
+              padding: EdgeInsets.all(12),
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+          )
+        else
+          _roundButton(
+            icon: Icons.mic,
+            tooltip: 'Record voice message',
+            onTap: _startRecording,
+          ),
+      ],
+    );
+  }
+
+  /// Replaces the text box while a voice note is being recorded or reviewed:
+  /// delete | timer or preview player | (stop) | send.
+  Widget _voiceBar() {
+    final recording = _voice == _VoiceState.recording;
+    final total = _recordElapsed;
+    final progress = !recording && total.inMilliseconds > 0
+        ? (_previewPosition.inMilliseconds / total.inMilliseconds).clamp(
+            0.0,
+            1.0,
+          )
+        : 0.0;
+    return Row(
+      children: [
+        IconButton(
+          tooltip: 'Delete recording',
+          icon: const Icon(
+            Icons.delete_outline,
+            color: AppColors.danger,
+            size: 26,
+          ),
+          onPressed: _discardVoice,
+        ),
+        Expanded(
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.fieldBorder),
+            ),
+            child: recording
+                ? Row(
+                    children: [
+                      const _BlinkingDot(),
+                      const SizedBox(width: 8),
+                      Text(
+                        ChatFormat.duration(total),
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Recording…',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _togglePreview,
+                        child: Icon(
+                          _previewPlaying
+                              ? Icons.pause_circle_filled
+                              : Icons.play_circle_fill,
+                          color: AppColors.violet,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 4,
+                            backgroundColor: AppColors.fieldBorder,
+                            valueColor: const AlwaysStoppedAnimation(
+                              AppColors.violet,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        ChatFormat.duration(
+                          _previewPosition > Duration.zero
+                              ? _previewPosition
+                              : total,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        if (recording)
+          IconButton(
+            tooltip: 'Stop and listen',
+            icon: const Icon(
+              Icons.stop_circle_outlined,
+              color: AppColors.danger,
+              size: 30,
+            ),
+            onPressed: _stopRecording,
+          ),
+        const SizedBox(width: 4),
+        _roundButton(
+          icon: Icons.send,
+          tooltip: 'Send voice message',
+          onTap: _sendVoice,
+        ),
+      ],
     );
   }
 
@@ -313,48 +540,58 @@ class ChatComposerState extends State<ChatComposer> {
     );
   }
 
-  Widget _recordingIndicator() {
-    return SizedBox(
-      height: 48,
-      child: Row(
-        children: [
-          const SizedBox(width: 14),
-          Icon(
-            _cancelRecording ? Icons.delete_outline : Icons.fiber_manual_record,
-            color: AppColors.danger,
-            size: 20,
+  Widget _roundButton({
+    required IconData icon,
+    required String tooltip,
+    VoidCallback? onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: AppColors.violet,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Icon(icon, color: Colors.white),
           ),
-          const SizedBox(width: 8),
-          Text(
-            ChatFormat.duration(_recordElapsed),
-            style: const TextStyle(fontSize: 15),
-          ),
-          const Spacer(),
-          Text(
-            _cancelRecording ? 'Release to cancel' : '‹ Slide to cancel',
-            style: TextStyle(
-              color: _cancelRecording ? AppColors.danger : AppColors.textMuted,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(width: 14),
-        ],
+        ),
       ),
     );
   }
+}
 
-  Widget _roundButton({required IconData icon, VoidCallback? onTap}) {
-    return Material(
-      color: AppColors.violet,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 48,
-          height: 48,
-          child: Icon(icon, color: Colors.white),
-        ),
+class _BlinkingDot extends StatefulWidget {
+  const _BlinkingDot();
+
+  @override
+  State<_BlinkingDot> createState() => _BlinkingDotState();
+}
+
+class _BlinkingDotState extends State<_BlinkingDot>
+    with SingleTickerProviderStateMixin {
+  late final _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween(begin: 0.25, end: 1.0).animate(_controller),
+      child: const Icon(
+        Icons.fiber_manual_record,
+        color: AppColors.danger,
+        size: 18,
       ),
     );
   }
