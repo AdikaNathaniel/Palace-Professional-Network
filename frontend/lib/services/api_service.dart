@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import '../config/api_config.dart';
 import '../models/biodata.dart';
@@ -102,8 +103,19 @@ class ApiService {
     }
     if (imageFile != null) {
       final bytes = await imageFile.readAsBytes();
+      final name = imageFile.name.toLowerCase();
+      final type = name.endsWith('.png')
+          ? 'png'
+          : name.endsWith('.webp')
+          ? 'webp'
+          : 'jpeg';
       request.files.add(
-        http.MultipartFile.fromBytes('image', bytes, filename: imageFile.name),
+        http.MultipartFile.fromBytes(
+          'image',
+          bytes,
+          filename: imageFile.name,
+          contentType: MediaType('image', type),
+        ),
       );
     }
 

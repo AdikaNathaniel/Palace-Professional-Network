@@ -55,7 +55,13 @@ export class ChatMediaService {
     this.giphyKey = config.get<string>('GIPHY_API_KEY') || undefined;
   }
 
-  async upload(file: Express.Multer.File): Promise<UploadedAttachment> {
+  get cloudinaryEnabled(): boolean {
+    return this.cloudinaryReady;
+  }
+
+  /// [folder] groups uploads in the Cloudinary media library (chat
+  /// attachments vs profile photos).
+  async upload(file: Express.Multer.File, folder = 'palace-chat'): Promise<UploadedAttachment> {
     if (!this.cloudinaryReady) {
       throw new HttpException(
         'Sharing photos and files is not set up yet.',
@@ -76,12 +82,12 @@ export class ChatMediaService {
         ? // Unsigned uploads only accept a few options; naming comes from the preset.
           cloudinary.uploader.unsigned_upload_stream(
             this.uploadPreset,
-            { resource_type: resourceType, folder: 'palace-chat' },
+            { resource_type: resourceType, folder },
             done,
           )
         : cloudinary.uploader.upload_stream(
             {
-              folder: 'palace-chat',
+              folder,
               resource_type: resourceType,
               use_filename: resourceType === 'raw',
               unique_filename: true,

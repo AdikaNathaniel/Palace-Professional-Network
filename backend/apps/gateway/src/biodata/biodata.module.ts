@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { BackendClientModule } from '../clients/backend-client.module';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { BiodataController } from './biodata.controller';
+import { ChatMediaService } from '../chat/chat-media.service';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import { BiodataController } from './biodata.controller';
     }),
   ],
   controllers: [BiodataController],
-  providers: [JwtAuthGuard],
+  providers: [JwtAuthGuard, ChatMediaService],
 })
 export class BiodataModule {}
