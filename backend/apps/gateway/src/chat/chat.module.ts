@@ -5,6 +5,7 @@ import { BackendClientModule } from '../clients/backend-client.module';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
+import { ChatMediaService } from './chat-media.service';
 
 @Module({
   imports: [
@@ -18,6 +19,6 @@ import { ChatGateway } from './chat.gateway';
     }),
   ],
   controllers: [ChatController],
-  providers: [JwtAuthGuard, ChatGateway],
+  providers: [JwtAuthGuard, ChatGateway, ChatMediaService],
 })
 export class ChatModule {}

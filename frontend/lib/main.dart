@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'models/session.dart';
 import 'pages/biodata_form_page.dart';
+import 'pages/chat_page.dart';
 import 'pages/chats_list_page.dart';
 import 'pages/dashboard_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/login_page.dart';
 import 'pages/settings_page.dart';
 import 'services/api_service.dart';
+import 'services/push_service.dart';
 import 'services/session_service.dart';
+import 'services/unread_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/unread_badge.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await PushService.init();
   runApp(const PalaceProfessionalNetworkApp());
 }
 
@@ -61,6 +67,8 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _onLogout() async {
+    // Before the token is dropped: the unregister call must be authenticated.
+    await PushService.stopForUser();
     await SessionService.clearSession();
     ApiService.authToken = null;
     // Plain state, not a re-consulted Future: once _loading is false, this
@@ -101,6 +109,31 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     _promptForBiodataIfMissing();
+    UnreadService.startPolling();
+    _lifecycle = AppLifecycleListener(
+      onResume: UnreadService.startPolling,
+      onPause: UnreadService.pausePolling,
+    );
+    PushService.startForUser(onOpenChat: _openChatFromNotification);
+  }
+
+  late final AppLifecycleListener _lifecycle;
+
+  void _openChatFromNotification(String roomId, String title) {
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            ChatPage(session: widget.session, roomId: roomId, title: title),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    UnreadService.stopPolling();
+    super.dispose();
   }
 
   /// Members only appear in the directory once they've submitted the biodata
@@ -139,6 +172,7 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   void _refreshTab(int index) {
+    UnreadService.refresh();
     if (index == 0) _dashboardKey.currentState?.refresh();
     if (index == 2) _directoryKey.currentState?.refresh();
     if (index == 3) _chatsKey.currentState?.refresh();
@@ -186,14 +220,35 @@ class _HomeShellState extends State<HomeShell> {
             icon: Icon(Icons.people_outline),
             label: 'Directory',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: 'Chats',
-          ),
+          BottomNavigationBarItem(icon: _ChatsTabIcon(), label: 'Chats'),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
             label: 'Settings',
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Chats tab icon with the total unread count bubbled on its corner.
+class _ChatsTabIcon extends StatelessWidget {
+  const _ChatsTabIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: UnreadService.counts,
+      builder: (context, counts, _) => Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(Icons.chat_bubble_outline),
+          if (counts.total > 0)
+            Positioned(
+              right: -14,
+              top: -8,
+              child: UnreadBadge(count: counts.total),
+            ),
         ],
       ),
     );

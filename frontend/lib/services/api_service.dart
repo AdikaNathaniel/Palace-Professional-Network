@@ -36,7 +36,10 @@ class ApiService {
   /// before (matched server-side by phone number) - null for a first-time
   /// submitter.
   static Future<Biodata?> fetchMine() async {
-    final res = await http.get(Uri.parse('$_base/biodata/me'), headers: _authHeaders);
+    final res = await http.get(
+      Uri.parse('$_base/biodata/me'),
+      headers: _authHeaders,
+    );
     if (res.statusCode == 401) {
       throw ApiException('Your session has expired. Please log in again.');
     }
@@ -52,7 +55,10 @@ class ApiService {
   }
 
   static Future<List<Biodata>> fetchAll() async {
-    final res = await http.get(Uri.parse('$_base/biodata'), headers: _authHeaders);
+    final res = await http.get(
+      Uri.parse('$_base/biodata'),
+      headers: _authHeaders,
+    );
     if (res.statusCode == 401) {
       throw ApiException('Your session has expired. Please log in again.');
     }
@@ -97,11 +103,7 @@ class ApiService {
     if (imageFile != null) {
       final bytes = await imageFile.readAsBytes();
       request.files.add(
-        http.MultipartFile.fromBytes(
-          'image',
-          bytes,
-          filename: imageFile.name,
-        ),
+        http.MultipartFile.fromBytes('image', bytes, filename: imageFile.name),
       );
     }
 
@@ -148,7 +150,10 @@ class ApiService {
   }
 
   static Future<List<DmRoomPreview>> fetchDmRooms() async {
-    final res = await http.get(Uri.parse('$_base/chat/dm-rooms'), headers: _authHeaders);
+    final res = await http.get(
+      Uri.parse('$_base/chat/dm-rooms'),
+      headers: _authHeaders,
+    );
     if (res.statusCode == 401) {
       throw ApiException('Your session has expired. Please log in again.');
     }
@@ -159,6 +164,17 @@ class ApiService {
     return list
         .map((e) => DmRoomPreview.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  static Future<UnreadCounts> fetchUnreadCounts() async {
+    final res = await http.get(
+      Uri.parse('$_base/chat/unread'),
+      headers: _authHeaders,
+    );
+    if (res.statusCode != 200) {
+      throw ApiException('Failed to load unread messages (${res.statusCode}).');
+    }
+    return UnreadCounts.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
   static String resolveImageUrl(String? imageUrl) {

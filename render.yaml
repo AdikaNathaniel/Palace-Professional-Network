@@ -22,3 +22,19 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      # Chat attachments. Either API_KEY + API_SECRET (signed uploads) or
+      # UPLOAD_PRESET (an "Unsigned" preset) - see chat-media.service.ts.
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dm1wcgwwi
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_UPLOAD_PRESET
+        sync: false
+      # Sticker/GIF search.
+      - key: GIPHY_API_KEY
+        sync: false
+      # Push notifications: Firebase service-account JSON.
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false

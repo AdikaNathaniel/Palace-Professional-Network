@@ -67,3 +67,9 @@ android {
 flutter {
     source = "../.."
 }
+
+// Push notifications (Firebase Cloud Messaging) switch on once the Firebase
+// config is dropped in; without it the app builds and runs with push off.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}

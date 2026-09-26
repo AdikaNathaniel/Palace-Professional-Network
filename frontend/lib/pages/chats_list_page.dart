@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../models/chat_message.dart';
 import '../models/session.dart';
 import '../services/api_service.dart';
+import '../services/unread_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/chat_rooms.dart';
 import '../utils/profession_images.dart';
+import '../widgets/unread_badge.dart';
 import 'chat_page.dart';
 
 class ChatsListPage extends StatefulWidget {
@@ -27,35 +29,46 @@ class ChatsListPageState extends State<ChatsListPage> {
   }
 
   void _load() {
-    _myCategoryFuture = ApiService.fetchMine().then((b) => b?.professionCategory);
+    _myCategoryFuture = ApiService.fetchMine().then(
+      (b) => b?.professionCategory,
+    );
     _dmRoomsFuture = ApiService.fetchDmRooms();
   }
 
   void refresh() {
     setState(_load);
+    UnreadService.refresh();
+  }
+
+  /// Opens a chat, then on return clears its badge and reloads the list so
+  /// the previews and counts reflect what was just read.
+  Future<void> _openChat(String roomId, ChatPage page) async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+    if (!mounted) return;
+    UnreadService.markRoomSeen(roomId);
+    setState(_load);
   }
 
   void _openGroupChat(String category) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ChatPage(
-          session: widget.session,
-          roomId: ChatRooms.category(category),
-          title: ProfessionImages.shortLabel(category),
-          subtitle: 'Group chat for this profession',
-        ),
+    final roomId = ChatRooms.category(category);
+    _openChat(
+      roomId,
+      ChatPage(
+        session: widget.session,
+        roomId: roomId,
+        title: ProfessionImages.shortLabel(category),
+        subtitle: 'Group chat for this profession',
       ),
     );
   }
 
   void _openDm(DmRoomPreview room) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ChatPage(
-          session: widget.session,
-          roomId: room.roomId,
-          title: room.otherName,
-        ),
+    _openChat(
+      room.roomId,
+      ChatPage(
+        session: widget.session,
+        roomId: room.roomId,
+        title: room.otherName,
       ),
     );
   }
@@ -140,10 +153,15 @@ class ChatsListPageState extends State<ChatsListPage> {
                 }
                 return Column(
                   children: rooms
-                      .map((room) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _DmTile(room: room, onTap: () => _openDm(room)),
-                          ))
+                      .map(
+                        (room) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _DmTile(
+                            room: room,
+                            onTap: () => _openDm(room),
+                          ),
+                        ),
+                      )
                       .toList(),
                 );
               },
@@ -216,7 +234,13 @@ class _GroupChatTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white),
+              _RoomUnreadBadge(roomId: ChatRooms.category(category)),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: Colors.white,
+              ),
             ],
           ),
         ),
@@ -259,7 +283,10 @@ class _DmTile extends StatelessWidget {
                   children: [
                     Text(
                       room.otherName,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     if (room.lastMessage.isNotEmpty) ...[
                       const SizedBox(height: 2),
@@ -267,16 +294,35 @@ class _DmTile extends StatelessWidget {
                         room.lastMessage,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
+              _RoomUnreadBadge(roomId: room.roomId),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RoomUnreadBadge extends StatelessWidget {
+  final String roomId;
+
+  const _RoomUnreadBadge({required this.roomId});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: UnreadService.counts,
+      builder: (context, counts, _) =>
+          UnreadBadge(count: counts.forRoom(roomId)),
     );
   }
 }
