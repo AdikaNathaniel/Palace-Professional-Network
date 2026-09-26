@@ -6,6 +6,7 @@ import '../services/unread_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/chat_rooms.dart';
 import '../utils/profession_images.dart';
+import '../widgets/profile_avatar.dart';
 import '../widgets/unread_badge.dart';
 import 'chat_page.dart';
 
@@ -69,6 +70,7 @@ class ChatsListPageState extends State<ChatsListPage> {
         session: widget.session,
         roomId: room.roomId,
         title: room.otherName,
+        imageUrl: room.otherImageUrl,
       ),
     );
   }
@@ -271,10 +273,10 @@ class _DmTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const CircleAvatar(
+              ProfileAvatar(
+                imageUrl: room.otherImageUrl,
+                name: room.otherName,
                 radius: 22,
-                backgroundColor: AppColors.background,
-                child: Icon(Icons.person, color: AppColors.violetLight),
               ),
               const SizedBox(width: 12),
               Expanded(

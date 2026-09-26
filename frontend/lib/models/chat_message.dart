@@ -287,10 +287,20 @@ class UnreadCounts {
   }
 }
 
+/// The other person in a DM, for the chat header.
+class ChatPeer {
+  final DateTime? lastSeenAt;
+  final String? fullName;
+  final String? imageUrl;
+
+  const ChatPeer({this.lastSeenAt, this.fullName, this.imageUrl});
+}
+
 class DmRoomPreview {
   final String roomId;
   final String otherPhone;
   final String otherName;
+  final String? otherImageUrl;
   final String lastMessage;
   final DateTime? lastMessageAt;
 
@@ -298,6 +308,7 @@ class DmRoomPreview {
     required this.roomId,
     required this.otherPhone,
     required this.otherName,
+    this.otherImageUrl,
     required this.lastMessage,
     this.lastMessageAt,
   });
@@ -307,6 +318,7 @@ class DmRoomPreview {
       roomId: json['roomId'] as String? ?? '',
       otherPhone: json['otherPhone'] as String? ?? '',
       otherName: json['otherName'] as String? ?? '',
+      otherImageUrl: json['otherImageUrl'] as String?,
       lastMessage: json['lastMessage'] as String? ?? '',
       lastMessageAt: json['lastMessageAt'] != null
           ? DateTime.tryParse(json['lastMessageAt'] as String)

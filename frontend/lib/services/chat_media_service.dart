@@ -106,15 +106,22 @@ class ChatMediaService {
         .toList();
   }
 
-  static Future<DateTime?> lastSeen(String phoneNumber) async {
+  /// Presence and profile info for a DM header; null if it can't be loaded.
+  static Future<ChatPeer?> peer(String phoneNumber) async {
     final res = await http.get(
       Uri.parse('$_base/chat/presence/${Uri.encodeComponent(phoneNumber)}'),
       headers: _auth,
     );
     if (res.statusCode != 200) return null;
     final body = jsonDecode(res.body) as Map<String, dynamic>;
-    final value = body['lastSeenAt'];
-    return value is String ? DateTime.tryParse(value)?.toLocal() : null;
+    final lastSeen = body['lastSeenAt'];
+    return ChatPeer(
+      lastSeenAt: lastSeen is String
+          ? DateTime.tryParse(lastSeen)?.toLocal()
+          : null,
+      fullName: body['fullName'] as String?,
+      imageUrl: body['imageUrl'] as String?,
+    );
   }
 
   static Future<void> registerDeviceToken(String token) async {

@@ -53,6 +53,7 @@ class BiodataDetailPage extends StatelessWidget {
                     session: session,
                     roomId: ChatRooms.dm(session.phoneNumber, entry.phoneNumber),
                     title: entry.fullName,
+                    imageUrl: entry.imageUrl,
                   ),
                 ),
               ),

@@ -14,6 +14,7 @@ import '../utils/chat_format.dart';
 import '../widgets/chat/chat_composer.dart';
 import '../widgets/chat/chat_sheets.dart';
 import '../widgets/chat/message_bubble.dart';
+import '../widgets/profile_avatar.dart';
 
 class ChatPage extends StatefulWidget {
   final UserSession session;
@@ -21,12 +22,17 @@ class ChatPage extends StatefulWidget {
   final String title;
   final String? subtitle;
 
+  /// The other person's profile photo in a DM, if the caller already has it
+  /// (otherwise it's fetched along with their presence).
+  final String? imageUrl;
+
   const ChatPage({
     super.key,
     required this.session,
     required this.roomId,
     required this.title,
     this.subtitle,
+    this.imageUrl,
   });
 
   @override
@@ -64,6 +70,7 @@ class _ChatPageState extends State<ChatPage> {
   Timer? _typingStopTimer;
 
   DateTime? _otherLastSeen;
+  late String? _otherImageUrl = widget.imageUrl;
   Timer? _presenceTimer;
 
   String get _myPhone => widget.session.phoneNumber;
@@ -90,8 +97,12 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _loadPresence() async {
-    final lastSeen = await ChatMediaService.lastSeen(_otherPhone!);
-    if (mounted) setState(() => _otherLastSeen = lastSeen);
+    final peer = await ChatMediaService.peer(_otherPhone!);
+    if (!mounted || peer == null) return;
+    setState(() {
+      _otherLastSeen = peer.lastSeenAt;
+      if (peer.imageUrl?.isNotEmpty == true) _otherImageUrl = peer.imageUrl;
+    });
   }
 
   void _startConnecting() {
@@ -534,7 +545,8 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
-    if (PushService.activeRoomId == widget.roomId) PushService.activeRoomId = null;
+    if (PushService.activeRoomId == widget.roomId)
+      PushService.activeRoomId = null;
     _stopTyping();
     _timeoutTimer?.cancel();
     _presenceTimer?.cancel();
@@ -548,6 +560,17 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   // ------------------------------------------------------------------ UI
+
+  void _openPeerPhoto() {
+    final url = ApiService.resolveImageUrl(_otherImageUrl);
+    if (url.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            FullScreenImagePage(url: url, heroTag: 'peer-${widget.roomId}'),
+      ),
+    );
+  }
 
   String? get _statusLine {
     if (_typers.isNotEmpty) {
@@ -580,19 +603,22 @@ class _ChatPageState extends State<ChatPage> {
           titleSpacing: 0,
           title: Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.white24,
-                child: _isDm
-                    ? Text(
-                        ChatFormat.initials(widget.title),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      )
-                    : const Icon(Icons.groups, color: Colors.white, size: 20),
-              ),
+              _isDm
+                  ? GestureDetector(
+                      onTap: _openPeerPhoto,
+                      child: ProfileAvatar(
+                        imageUrl: _otherImageUrl,
+                        name: widget.title,
+                        radius: 19,
+                        background: Colors.white24,
+                        foreground: Colors.white,
+                      ),
+                    )
+                  : const CircleAvatar(
+                      radius: 19,
+                      backgroundColor: Colors.white24,
+                      child: Icon(Icons.groups, color: Colors.white, size: 20),
+                    ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

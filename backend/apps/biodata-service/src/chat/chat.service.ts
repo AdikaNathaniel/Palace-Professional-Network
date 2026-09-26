@@ -241,9 +241,18 @@ export class ChatService {
     return { total, rooms };
   }
 
+  /// Header info for a DM: presence plus the person's profile photo/name.
   async getPresence(phoneNumber: string) {
-    const user = await this.authUserModel.findOne({ phoneNumber }).exec();
-    return { phoneNumber, lastSeenAt: user?.lastSeenAt ?? null };
+    const [user, biodata] = await Promise.all([
+      this.authUserModel.findOne({ phoneNumber }).exec(),
+      this.biodataModel.findOne({ phoneNumber }).sort({ createdAt: -1 }).exec(),
+    ]);
+    return {
+      phoneNumber,
+      lastSeenAt: user?.lastSeenAt ?? null,
+      fullName: biodata?.fullName ?? user?.fullName ?? null,
+      imageUrl: biodata?.imageUrl ?? null,
+    };
   }
 
   async registerDevice(phoneNumber: string, token: string) {
@@ -295,6 +304,7 @@ export class ChatService {
           roomId,
           otherPhone,
           otherName: otherPerson?.fullName ?? otherPhone,
+          otherImageUrl: otherPerson?.imageUrl ?? null,
           lastMessage: lastMessageDoc?.text ?? '',
           lastMessageAt: lastMessageDoc?.createdAt ?? null,
         };
