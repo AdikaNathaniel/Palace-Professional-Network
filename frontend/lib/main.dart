@@ -12,6 +12,7 @@ import 'services/push_service.dart';
 import 'services/session_service.dart';
 import 'services/unread_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/in_app_notification.dart';
 import 'widgets/unread_badge.dart';
 
 Future<void> main() async {
@@ -114,7 +115,18 @@ class _HomeShellState extends State<HomeShell> {
       onResume: UnreadService.startPolling,
       onPause: UnreadService.pausePolling,
     );
-    PushService.startForUser(onOpenChat: _openChatFromNotification);
+    PushService.startForUser(
+      onOpenChat: _openChatFromNotification,
+      onForegroundMessage: (roomId, chatTitle, title, body) {
+        if (!mounted) return;
+        InAppNotification.show(
+          context,
+          title: title,
+          body: body,
+          onTap: () => _openChatFromNotification(roomId, chatTitle),
+        );
+      },
+    );
   }
 
   late final AppLifecycleListener _lifecycle;

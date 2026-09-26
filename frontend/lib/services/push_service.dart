@@ -20,6 +20,10 @@ class PushService {
   static StreamSubscription<RemoteMessage>? _openedSub;
   static StreamSubscription<RemoteMessage>? _foregroundSub;
 
+  /// The chat currently on screen (set by ChatPage), so no banner is shown
+  /// for messages the user is already looking at.
+  static String? activeRoomId;
+
   static Future<void> init() async {
     try {
       await Firebase.initializeApp();
@@ -30,9 +34,12 @@ class PushService {
   }
 
   /// Call once the user is logged in. [onOpenChat] runs when they tap a
-  /// notification (including the one that launched the app).
+  /// notification (including the one that launched the app);
+  /// [onForegroundMessage] when one arrives while the app is open.
   static Future<void> startForUser({
     required void Function(String roomId, String title) onOpenChat,
+    required void Function(String roomId, String chatTitle, String title, String body)
+    onForegroundMessage,
   }) async {
     if (!_enabled) return;
     try {
@@ -55,12 +62,21 @@ class PushService {
 
       await _openedSub?.cancel();
       _openedSub = FirebaseMessaging.onMessageOpenedApp.listen(open);
-      // While the app is open Android doesn't show the notification, but the
-      // unread badges should catch up immediately rather than on next poll.
+      // While the app is open Android doesn't show the notification itself,
+      // so the app shows its own banner, and the unread badges catch up
+      // immediately rather than on the next poll.
       await _foregroundSub?.cancel();
-      _foregroundSub = FirebaseMessaging.onMessage.listen(
-        (_) => UnreadService.refresh(),
-      );
+      _foregroundSub = FirebaseMessaging.onMessage.listen((message) {
+        UnreadService.refresh();
+        final roomId = message.data['roomId'] as String?;
+        if (roomId == null || roomId.isEmpty || roomId == activeRoomId) return;
+        onForegroundMessage(
+          roomId,
+          message.data['title'] as String? ?? 'Chat',
+          message.notification?.title ?? 'New message',
+          message.notification?.body ?? '',
+        );
+      });
 
       final initial = await messaging.getInitialMessage();
       if (initial != null) open(initial);

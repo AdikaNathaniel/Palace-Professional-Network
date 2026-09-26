@@ -8,6 +8,7 @@ import '../models/session.dart';
 import '../services/api_service.dart';
 import '../services/chat_media_service.dart';
 import '../services/chat_service.dart';
+import '../services/push_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/chat_format.dart';
 import '../widgets/chat/chat_composer.dart';
@@ -77,6 +78,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    PushService.activeRoomId = widget.roomId;
     _startConnecting();
     if (_isDm) {
       _loadPresence();
@@ -532,6 +534,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
+    if (PushService.activeRoomId == widget.roomId) PushService.activeRoomId = null;
     _stopTyping();
     _timeoutTimer?.cancel();
     _presenceTimer?.cancel();

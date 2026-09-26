@@ -87,8 +87,18 @@ export class PushService implements OnModuleInit {
           notification: { title, body: body.slice(0, 200) },
           data: { roomId: message.roomId, title: chatTitle },
           android: {
+            // Deliver immediately even if the phone is dozing.
             priority: 'high',
-            notification: { tag: message.roomId },
+            notification: {
+              // High-importance channel created by the app (MainActivity.kt):
+              // makes the notification pop up over the screen, with sound.
+              channelId: 'chat_messages',
+              priority: 'max',
+              sound: 'default',
+              defaultVibrateTimings: true,
+              icon: 'ic_stat_notification',
+              color: '#7C3AED',
+            },
           },
         });
         result.responses.forEach((r, idx) => {
