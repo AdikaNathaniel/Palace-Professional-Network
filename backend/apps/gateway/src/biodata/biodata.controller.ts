@@ -5,6 +5,7 @@ import {
   Inject,
   Post,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -14,7 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { firstValueFrom } from 'rxjs';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { Request } from 'express';
+import type { Request, Response } from 'express';
 import { BIODATA_TCP_PATTERNS, CreateBiodataDto } from '@app/shared';
 import { BIODATA_SERVICE_CLIENT } from '../clients/backend-client.constants';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -75,12 +76,16 @@ export class BiodataController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  findMine(@Req() req: AuthedRequest) {
-    return firstValueFrom(
+  async findMine(@Req() req: AuthedRequest, @Res() res: Response) {
+    const record = await firstValueFrom(
       this.client.send(BIODATA_TCP_PATTERNS.FIND_BY_PHONE, {
         phoneNumber: req.user!.sub,
       }),
     );
+    // Nest sends an empty body for a null return value, which the app's JSON
+    // parser rejects ("Unexpected end of input") for members who haven't
+    // submitted biodata yet. Always send valid JSON: the record, or `null`.
+    res.json(record ?? null);
   }
 
   @Get()

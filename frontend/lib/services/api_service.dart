@@ -43,6 +43,9 @@ class ApiService {
     if (res.statusCode != 200) {
       throw ApiException('Failed to load your biodata (${res.statusCode}).');
     }
+    // No record: the gateway replies 200 with an empty body (Nest sends
+    // nothing for a null result), which jsonDecode would choke on.
+    if (res.body.trim().isEmpty) return null;
     final body = jsonDecode(res.body);
     if (body == null) return null;
     return Biodata.fromJson(body as Map<String, dynamic>);

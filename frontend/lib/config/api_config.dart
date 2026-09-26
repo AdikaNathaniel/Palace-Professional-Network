@@ -9,6 +9,6 @@ class ApiConfig {
 
   static String get baseUrl {
     if (_override.isNotEmpty) return _override;
-    return 'https://palace-professional-network-ipc.fly.dev';
+    return 'https://palace-professional-network.onrender.com';
   }
 }

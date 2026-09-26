@@ -97,6 +97,42 @@ class _HomeShellState extends State<HomeShell> {
   final _directoryKey = GlobalKey<DirectoryPageState>();
   final _chatsKey = GlobalKey<ChatsListPageState>();
 
+  @override
+  void initState() {
+    super.initState();
+    _promptForBiodataIfMissing();
+  }
+
+  /// Members only appear in the directory once they've submitted the biodata
+  /// form, so anyone without a record (e.g. just registered) is sent straight
+  /// to it, on every app start, until they fill it in.
+  Future<void> _promptForBiodataIfMissing() async {
+    try {
+      final mine = await ApiService.fetchMine();
+      if (mine != null || !mounted) return;
+    } catch (_) {
+      // Network/session problems are surfaced by the pages themselves.
+      return;
+    }
+    setState(() => _currentIndex = 1);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Complete your profile'),
+        content: const Text(
+          'Please fill in the biodata form. Other members will only see you '
+          'in the Professional Directory after you submit it.',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Fill it in now'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _goToTab(int index) {
     setState(() => _currentIndex = index);
     _refreshTab(index);
