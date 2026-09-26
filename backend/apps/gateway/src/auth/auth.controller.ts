@@ -1,8 +1,12 @@
-import { Body, Controller, HttpException, Inject, Post } from '@nestjs/common';
+import { Body, Controller, HttpException, Inject, Post, Req, UseGuards } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { AUTH_TCP_PATTERNS, LoginDto, RegisterDto } from '@app/shared';
+import { Request } from 'express';
+import { AUTH_TCP_PATTERNS, ChangePinDto, LoginDto, RegisterDto } from '@app/shared';
 import { BIODATA_SERVICE_CLIENT } from '../clients/backend-client.constants';
+import { JwtAuthGuard } from './jwt-auth.guard';
+
+type AuthedRequest = Request & { user?: { sub: string } };
 
 @Controller('auth')
 export class AuthController {
@@ -18,6 +22,12 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.send(AUTH_TCP_PATTERNS.LOGIN, dto);
+  }
+
+  @Post('change-pin')
+  @UseGuards(JwtAuthGuard)
+  changePin(@Req() req: AuthedRequest, @Body() dto: ChangePinDto) {
+    return this.send(AUTH_TCP_PATTERNS.CHANGE_PIN, { phoneNumber: req.user!.sub, ...dto });
   }
 
   private async send(pattern: string, payload: unknown) {

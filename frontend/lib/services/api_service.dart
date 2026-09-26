@@ -118,6 +118,32 @@ class ApiService {
     }
   }
 
+  static Future<void> changePin({
+    required String currentPin,
+    required String newPin,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$_base/auth/change-pin'),
+      headers: {'Content-Type': 'application/json', ..._authHeaders},
+      body: jsonEncode({'currentPin': currentPin, 'newPin': newPin}),
+    );
+    if (res.statusCode == 401) {
+      throw ApiException('Your session has expired. Please log in again.');
+    }
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      String message = 'Failed to change PIN (${res.statusCode}).';
+      try {
+        final body = jsonDecode(res.body);
+        if (body is Map && body['message'] != null) {
+          message = body['message'] is List
+              ? (body['message'] as List).join(', ')
+              : body['message'].toString();
+        }
+      } catch (_) {}
+      throw ApiException(message);
+    }
+  }
+
   static Future<List<DmRoomPreview>> fetchDmRooms() async {
     final res = await http.get(Uri.parse('$_base/chat/dm-rooms'), headers: _authHeaders);
     if (res.statusCode == 401) {

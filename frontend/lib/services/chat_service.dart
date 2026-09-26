@@ -20,6 +20,16 @@ class ChatService {
           .setTransports(['websocket'])
           .setAuth({'token': token})
           .disableAutoConnect()
+          // Without this, socket.io-client multiplexes onto whatever
+          // connection is already open for this URL and skips the auth
+          // handshake entirely - so after logging out and back in as a
+          // different account, new sockets kept riding on the FIRST
+          // account's already-authenticated connection, and every message
+          // got stamped with that original account's phone number no
+          // matter who was actually logged in. forceNew guarantees a
+          // brand-new handshake (and a fresh server-side JWT check) every
+          // time a chat screen connects.
+          .enableForceNew()
           .build(),
     );
     // Registered here, right after the socket is created, rather than via a

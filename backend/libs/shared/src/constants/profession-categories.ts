@@ -70,4 +70,7 @@ export const BIODATA_TCP_PATTERNS = {
 export const AUTH_TCP_PATTERNS = {
   REGISTER: 'auth.register',
   LOGIN: 'auth.login',
+  CHANGE_PIN: 'auth.changePin',
 } as const;
+
+export const DEFAULT_PIN = '1111';

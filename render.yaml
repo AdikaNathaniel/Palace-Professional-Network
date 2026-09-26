@@ -1,0 +1,24 @@
+# Render Blueprint for the NestJS backend (gateway + biodata-service in one
+# container, same as the Fly.io setup — see backend/Dockerfile and start.sh).
+#
+# Free plan caveats: the service sleeps after 15 min idle, and the filesystem
+# is ephemeral, so files in /app/uploads are lost on every restart/redeploy.
+services:
+  - type: web
+    name: palace-professional-network
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: BIODATA_SERVICE_HOST
+        value: 127.0.0.1
+      - key: BIODATA_SERVICE_PORT
+        value: "3001"
+      # Secrets: entered in the Render dashboard when the Blueprint is created.
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false

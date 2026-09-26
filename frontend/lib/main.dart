@@ -5,6 +5,7 @@ import 'pages/chats_list_page.dart';
 import 'pages/dashboard_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/login_page.dart';
+import 'pages/settings_page.dart';
 import 'services/api_service.dart';
 import 'services/session_service.dart';
 import 'theme/app_theme.dart';
@@ -124,11 +125,13 @@ class _HomeShellState extends State<HomeShell> {
       BiodataFormPage(session: widget.session, onSubmitted: () => _goToTab(2)),
       DirectoryPage(key: _directoryKey, session: widget.session),
       ChatsListPage(key: _chatsKey, session: widget.session),
+      const SettingsPage(),
     ];
 
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() => _currentIndex = index);
@@ -150,6 +153,10 @@ class _HomeShellState extends State<HomeShell> {
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
             label: 'Chats',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            label: 'Settings',
           ),
         ],
       ),
