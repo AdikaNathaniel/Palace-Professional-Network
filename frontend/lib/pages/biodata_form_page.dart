@@ -5,6 +5,7 @@ import '../models/biodata.dart';
 import '../models/session.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/searchable_select_field.dart';
 import '../widgets/ipc_logo.dart';
 
 class BiodataFormPage extends StatefulWidget {
@@ -191,7 +192,7 @@ class _BiodataFormPageState extends State<BiodataFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Palace Professional Network')),
+      appBar: AppBar(title: const Text('My Biodata')),
       body: _buildBody(),
     );
   }
@@ -299,18 +300,30 @@ class _BiodataFormPageState extends State<BiodataFormPage> {
             ),
             const SizedBox(height: 16),
             _label('Profession / Occupation *'),
-            _dropdown(
+            SearchableSelectField(
               value: _professionCategory,
-              items: options.professionCategories,
+              groups: {'': options.professionCategories},
+              hint: 'Select your profession',
+              sheetTitle: 'Profession / Occupation',
+              searchHint: 'Search professions',
               onChanged: (v) => setState(() {
+                if (v != _professionCategory) _professionSubCategory = null;
                 _professionCategory = v;
-                _professionSubCategory = null;
               }),
             ),
             if (_needsSubCategory) ...[
               const SizedBox(height: 16),
               _label('Specific trade / business type *'),
-              _groupedSubCategoryDropdown(options),
+              SearchableSelectField(
+                // New field (and its validation state) per category choice.
+                key: ValueKey('sub-$_professionCategory'),
+                value: _professionSubCategory,
+                groups: options.professionSubCategories,
+                hint: 'Select your trade or business',
+                sheetTitle: 'Trade / business type',
+                searchHint: 'Search trades, e.g. tailor, phones',
+                onChanged: (v) => setState(() => _professionSubCategory = v),
+              ),
             ],
             const SizedBox(height: 16),
             _label('Place of Work *'),
@@ -406,41 +419,6 @@ class _BiodataFormPageState extends State<BiodataFormPage> {
     );
   }
 
-  Widget _groupedSubCategoryDropdown(BiodataOptions options) {
-    final items = <DropdownMenuItem<String>>[];
-    options.professionSubCategories.forEach((group, values) {
-      items.add(DropdownMenuItem(
-        enabled: false,
-        value: '__header_$group',
-        child: Text(
-          group,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.violet),
-        ),
-      ));
-      for (final v in values) {
-        items.add(DropdownMenuItem(value: v, child: Text('  $v')));
-      }
-    });
-    return DropdownButtonFormField<String>(
-      initialValue: _professionSubCategory,
-      isExpanded: true,
-      items: items,
-      selectedItemBuilder: (context) => items
-          .map((item) => Text(
-                item.value != null && item.value!.startsWith('__header_')
-                    ? ''
-                    : (item.child as Text).data ?? '',
-                overflow: TextOverflow.ellipsis,
-              ))
-          .toList(),
-      onChanged: (v) {
-        if (v != null && v.startsWith('__header_')) return;
-        setState(() => _professionSubCategory = v);
-      },
-      validator: (v) => (v == null) ? 'Required' : null,
-      decoration: const InputDecoration(),
-    );
-  }
 }
 
 class _ErrorState extends StatelessWidget {

@@ -11,7 +11,15 @@ import 'register_page.dart';
 class LoginPage extends StatefulWidget {
   final ValueChanged<UserSession> onLoggedIn;
 
-  const LoginPage({super.key, required this.onLoggedIn});
+  /// Called instead of [onLoggedIn] when the user has just created an
+  /// account, so the app can take them straight to the biodata form.
+  final ValueChanged<UserSession> onRegistered;
+
+  const LoginPage({
+    super.key,
+    required this.onLoggedIn,
+    required this.onRegistered,
+  });
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -57,7 +65,7 @@ class _LoginPageState extends State<LoginPage> {
   void _goToRegister() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => RegisterPage(onRegistered: widget.onLoggedIn),
+        builder: (_) => RegisterPage(onRegistered: widget.onRegistered),
       ),
     );
   }

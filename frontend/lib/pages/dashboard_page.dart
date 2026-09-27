@@ -9,13 +9,11 @@ import '../widgets/profession_category_card.dart';
 class DashboardPage extends StatefulWidget {
   final UserSession session;
   final ValueChanged<String> onCategoryTap;
-  final Future<void> Function() onLogout;
 
   const DashboardPage({
     super.key,
     required this.session,
     required this.onCategoryTap,
-    required this.onLogout,
   });
 
   @override
@@ -41,12 +39,13 @@ class DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Home'),
         actions: [
+          // Notifications centre - placeholder for now, not wired up yet.
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Log out',
-            onPressed: () => _confirmLogout(context),
+            icon: const Icon(Icons.notifications_none_rounded, size: 26),
+            tooltip: 'Notifications',
+            onPressed: () {},
           ),
         ],
       ),
@@ -130,26 +129,4 @@ class DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Future<void> _confirmLogout(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Log out?'),
-        content: const Text('You will need your phone number and PIN to log back in.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Log out'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await widget.onLogout();
-    }
-  }
 }

@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'models/session.dart';
+import 'pages/account_page.dart';
 import 'pages/biodata_form_page.dart';
 import 'pages/chat_page.dart';
 import 'pages/chats_list_page.dart';
 import 'pages/dashboard_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/login_page.dart';
-import 'pages/settings_page.dart';
 import 'services/api_service.dart';
 import 'services/push_service.dart';
 import 'services/session_service.dart';
 import 'services/unread_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/edge_bulge_page_view.dart';
 import 'widgets/in_app_notification.dart';
 import 'widgets/unread_badge.dart';
 
@@ -46,6 +47,9 @@ class _AuthGateState extends State<AuthGate> {
   bool _loading = true;
   UserSession? _session;
 
+  /// True right after sign-up: the home screen opens the biodata form first.
+  bool _justRegistered = false;
+
   @override
   void initState() {
     super.initState();
@@ -62,9 +66,21 @@ class _AuthGateState extends State<AuthGate> {
     });
   }
 
-  void _onLoggedIn(UserSession session) {
+  void _onLoggedIn(UserSession session) =>
+      _signIn(session, justRegistered: false);
+
+  void _onRegistered(UserSession session) =>
+      _signIn(session, justRegistered: true);
+
+  void _signIn(UserSession session, {required bool justRegistered}) {
     ApiService.authToken = session.token;
-    setState(() => _session = session);
+    // The register screen is pushed on top of the login screen; close it
+    // (and anything else above this gate) so the home screen is visible.
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    setState(() {
+      _session = session;
+      _justRegistered = justRegistered;
+    });
   }
 
   Future<void> _onLogout() async {
@@ -75,7 +91,10 @@ class _AuthGateState extends State<AuthGate> {
     // Plain state, not a re-consulted Future: once _loading is false, this
     // is the only source of truth, so there's no stale cached value for
     // logout to bounce off of.
-    setState(() => _session = null);
+    setState(() {
+      _session = null;
+      _justRegistered = false;
+    });
   }
 
   @override
@@ -84,9 +103,13 @@ class _AuthGateState extends State<AuthGate> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (_session != null) {
-      return HomeShell(session: _session!, onLogout: _onLogout);
+      return HomeShell(
+        session: _session!,
+        onLogout: _onLogout,
+        openBiodataOnStart: _justRegistered,
+      );
     }
-    return LoginPage(onLoggedIn: _onLoggedIn);
+    return LoginPage(onLoggedIn: _onLoggedIn, onRegistered: _onRegistered);
   }
 }
 
@@ -94,22 +117,47 @@ class HomeShell extends StatefulWidget {
   final UserSession session;
   final Future<void> Function() onLogout;
 
-  const HomeShell({super.key, required this.session, required this.onLogout});
+  /// Set for a brand-new account: open the biodata form immediately.
+  final bool openBiodataOnStart;
+
+  const HomeShell({
+    super.key,
+    required this.session,
+    required this.onLogout,
+    this.openBiodataOnStart = false,
+  });
 
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _currentIndex = 0;
+  static const _dashboardTab = 0;
+  static const _directoryTab = 1;
+  static const _chatsTab = 2;
+
+  int _currentIndex = _dashboardTab;
+  final _pageController = PageController();
+
+  /// Set while a bottom-bar tap is animating across pages, so the pages it
+  /// passes through on the way aren't refreshed.
+  int? _tapTarget;
   final _dashboardKey = GlobalKey<DashboardPageState>();
   final _directoryKey = GlobalKey<DirectoryPageState>();
   final _chatsKey = GlobalKey<ChatsListPageState>();
+  final _accountKey = GlobalKey<AccountPageState>();
 
   @override
   void initState() {
     super.initState();
-    _promptForBiodataIfMissing();
+    if (widget.openBiodataOnStart) {
+      // Just registered: go straight to the form, no reminder dialog.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openBiodata();
+      });
+    } else {
+      _promptForBiodataIfMissing();
+    }
     UnreadService.startPolling();
     _lifecycle = AppLifecycleListener(
       onResume: UnreadService.startPolling,
@@ -143,6 +191,7 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   void dispose() {
+    _pageController.dispose();
     _lifecycle.dispose();
     UnreadService.stopPolling();
     super.dispose();
@@ -159,7 +208,6 @@ class _HomeShellState extends State<HomeShell> {
       // Network/session problems are surfaced by the pages themselves.
       return;
     }
-    setState(() => _currentIndex = 1);
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -176,23 +224,70 @@ class _HomeShellState extends State<HomeShell> {
         ],
       ),
     );
+    if (mounted) _openBiodata();
+  }
+
+  /// The biodata form opens from the Account tab (and
+  /// automatically for members who haven't filled it in). After submitting,
+  /// go to the Directory so they can see themselves listed.
+  void _openBiodata() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (pageContext) => BiodataFormPage(
+          session: widget.session,
+          onSubmitted: () {
+            Navigator.of(pageContext).pop();
+            _accountKey.currentState?.refresh();
+            _goToTab(_directoryTab);
+          },
+        ),
+      ),
+    );
   }
 
   void _goToTab(int index) {
+    if (_pageController.hasClients) _pageController.jumpToPage(index);
+    setState(() => _currentIndex = index);
+    _refreshTab(index);
+  }
+
+  Future<void> _onNavTap(int index) async {
+    if (index == _currentIndex) {
+      _refreshTab(index);
+      return;
+    }
+    _tapTarget = index;
+    setState(() => _currentIndex = index);
+    await _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
+    _tapTarget = null;
+    _refreshTab(index);
+  }
+
+  void _onPageChanged(int index) {
+    if (_tapTarget != null) return;
     setState(() => _currentIndex = index);
     _refreshTab(index);
   }
 
   void _refreshTab(int index) {
     UnreadService.refresh();
-    if (index == 0) _dashboardKey.currentState?.refresh();
-    if (index == 2) _directoryKey.currentState?.refresh();
-    if (index == 3) _chatsKey.currentState?.refresh();
+    if (index == _dashboardTab) _dashboardKey.currentState?.refresh();
+    if (index == _directoryTab) _directoryKey.currentState?.refresh();
+    if (index == _chatsTab) _chatsKey.currentState?.refresh();
   }
 
   void _goToDirectoryWithCategory(String category) {
-    setState(() => _currentIndex = 2);
-    _directoryKey.currentState?.applyCategoryFilter(category);
+    _pageController.jumpToPage(_directoryTab);
+    setState(() => _currentIndex = _directoryTab);
+    // The Directory page is only built the first time it's shown, so wait
+    // a frame for it to exist before filtering.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _directoryKey.currentState?.applyCategoryFilter(category);
+    });
   }
 
   @override
@@ -202,31 +297,36 @@ class _HomeShellState extends State<HomeShell> {
         key: _dashboardKey,
         session: widget.session,
         onCategoryTap: _goToDirectoryWithCategory,
-        onLogout: widget.onLogout,
       ),
-      BiodataFormPage(session: widget.session, onSubmitted: () => _goToTab(2)),
       DirectoryPage(key: _directoryKey, session: widget.session),
       ChatsListPage(key: _chatsKey, session: widget.session),
-      const SettingsPage(),
+      AccountPage(
+        key: _accountKey,
+        session: widget.session,
+        onOpenBiodata: _openBiodata,
+        onLogout: widget.onLogout,
+      ),
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: pages),
+      // Swipe between tabs, with the violet edge-bulge effect.
+      body: EdgeBulgePageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        children: pages,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() => _currentIndex = index);
-          _refreshTab(index);
-        },
+        iconSize: 22,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
+        onTap: _onNavTap,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit_note_outlined),
-            label: 'Biodata Form',
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home_rounded),
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.people_outline),
@@ -234,8 +334,9 @@ class _HomeShellState extends State<HomeShell> {
           ),
           BottomNavigationBarItem(icon: _ChatsTabIcon(), label: 'Chats'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            label: 'Settings',
+            icon: Icon(Icons.account_circle_outlined),
+            activeIcon: Icon(Icons.account_circle),
+            label: 'Account',
           ),
         ],
       ),
