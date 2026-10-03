@@ -9,11 +9,13 @@ import '../widgets/profession_category_card.dart';
 class DashboardPage extends StatefulWidget {
   final UserSession session;
   final ValueChanged<String> onCategoryTap;
+  final VoidCallback onOpenAccount;
 
   const DashboardPage({
     super.key,
     required this.session,
     required this.onCategoryTap,
+    required this.onOpenAccount,
   });
 
   @override
@@ -41,11 +43,10 @@ class DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         title: const Text('Home'),
         actions: [
-          // Notifications centre - placeholder for now, not wired up yet.
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, size: 26),
-            tooltip: 'Notifications',
-            onPressed: () {},
+            icon: const Icon(Icons.account_circle_outlined, size: 26),
+            tooltip: 'Account',
+            onPressed: widget.onOpenAccount,
           ),
         ],
       ),

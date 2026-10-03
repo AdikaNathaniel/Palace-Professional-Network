@@ -4,9 +4,11 @@ import '../models/session.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/profile_avatar.dart';
+import 'notifications_page.dart';
 import 'settings_page.dart';
 
-/// "Account" tab: who's signed in, plus My Biodata, Settings and Log out.
+/// Account page (opened from the Home app bar): who's signed in, plus My
+/// Biodata, Notifications, Settings and Log out.
 class AccountPage extends StatefulWidget {
   final UserSession session;
   final VoidCallback onOpenBiodata;
@@ -126,6 +128,14 @@ class AccountPageState extends State<AccountPage> {
               title: 'My Biodata',
               subtitle: 'Edit your profile',
               onTap: widget.onOpenBiodata,
+            ),
+            _item(
+              icon: Icons.notifications_none_rounded,
+              title: 'Notifications',
+              subtitle: 'Announcements and updates',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationsPage()),
+              ),
             ),
             _item(
               icon: Icons.settings_outlined,

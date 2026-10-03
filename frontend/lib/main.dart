@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'models/session.dart';
+import 'pages/about_page.dart';
 import 'pages/account_page.dart';
 import 'pages/biodata_form_page.dart';
 import 'pages/chat_page.dart';
@@ -88,6 +89,10 @@ class _AuthGateState extends State<AuthGate> {
     await PushService.stopForUser();
     await SessionService.clearSession();
     ApiService.authToken = null;
+    if (!mounted) return;
+    // Logout is triggered from the Account page, which is pushed above the
+    // home screen; close it so the login screen isn't hidden behind it.
+    Navigator.of(context).popUntil((route) => route.isFirst);
     // Plain state, not a re-consulted Future: once _loading is false, this
     // is the only source of truth, so there's no stale cached value for
     // logout to bounce off of.
@@ -145,7 +150,6 @@ class _HomeShellState extends State<HomeShell> {
   final _dashboardKey = GlobalKey<DashboardPageState>();
   final _directoryKey = GlobalKey<DirectoryPageState>();
   final _chatsKey = GlobalKey<ChatsListPageState>();
-  final _accountKey = GlobalKey<AccountPageState>();
 
   @override
   void initState() {
@@ -227,7 +231,7 @@ class _HomeShellState extends State<HomeShell> {
     if (mounted) _openBiodata();
   }
 
-  /// The biodata form opens from the Account tab (and
+  /// The biodata form opens from the Account page (and
   /// automatically for members who haven't filled it in). After submitting,
   /// go to the Directory so they can see themselves listed.
   void _openBiodata() {
@@ -236,8 +240,9 @@ class _HomeShellState extends State<HomeShell> {
         builder: (pageContext) => BiodataFormPage(
           session: widget.session,
           onSubmitted: () {
-            Navigator.of(pageContext).pop();
-            _accountKey.currentState?.refresh();
+            // Closes the form and, if it was opened from there, the Account
+            // page too.
+            Navigator.of(pageContext).popUntil((route) => route.isFirst);
             _goToTab(_directoryTab);
           },
         ),
@@ -280,6 +285,18 @@ class _HomeShellState extends State<HomeShell> {
     if (index == _chatsTab) _chatsKey.currentState?.refresh();
   }
 
+  void _openAccount() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AccountPage(
+          session: widget.session,
+          onOpenBiodata: _openBiodata,
+          onLogout: widget.onLogout,
+        ),
+      ),
+    );
+  }
+
   void _goToDirectoryWithCategory(String category) {
     _pageController.jumpToPage(_directoryTab);
     setState(() => _currentIndex = _directoryTab);
@@ -297,15 +314,11 @@ class _HomeShellState extends State<HomeShell> {
         key: _dashboardKey,
         session: widget.session,
         onCategoryTap: _goToDirectoryWithCategory,
+        onOpenAccount: _openAccount,
       ),
       DirectoryPage(key: _directoryKey, session: widget.session),
       ChatsListPage(key: _chatsKey, session: widget.session),
-      AccountPage(
-        key: _accountKey,
-        session: widget.session,
-        onOpenBiodata: _openBiodata,
-        onLogout: widget.onLogout,
-      ),
+      const AboutPage(),
     ];
 
     return Scaffold(
@@ -334,9 +347,9 @@ class _HomeShellState extends State<HomeShell> {
           ),
           BottomNavigationBarItem(icon: _ChatsTabIcon(), label: 'Chats'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle_outlined),
-            activeIcon: Icon(Icons.account_circle),
-            label: 'Account',
+            icon: Icon(Icons.info_outline_rounded),
+            activeIcon: Icon(Icons.info_rounded),
+            label: 'About Us',
           ),
         ],
       ),
