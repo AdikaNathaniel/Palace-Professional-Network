@@ -47,11 +47,30 @@ class Leadership {
 
   static const _photos = 'assets/images/leads';
 
-  /// Head of the Professional Coordinators. Not yet announced.
+  /// Head of the Professional Coordinators, who oversees all the groups.
+  /// Also the Healthcare Professionals group's coordinator.
   static const Leader chiefCoordinator = Leader(
-    name: 'To be announced',
+    name: 'Mrs. Regina R. Matey',
     role: 'Chief Professional Coordinator',
+    phone: '0278060762',
+    photoAsset: '$_photos/racheal.jpg',
+    bio: _rachealBio,
   );
+
+  static const _rachealBio =
+      'Racheal is a dedicated healthcare professional and an advocate '
+      'for maternal and child health, with specialized expertise in '
+      'nursing, midwifery practice, and public health education. With a '
+      'decade of hands-on experience in both small clinics and large, '
+      'state-of-the-art health facilities, she brings a wealth of '
+      'clinical knowledge and practical insight into maternal and '
+      'reproductive health.\n\n'
+      'In 2023, she was nominated as the Outstanding Midwife at the '
+      'Greater Accra Regional Hospital and received the Best Practicing '
+      'Midwife Award for the Greater Accra Region during the '
+      'International Day of Midwives. In 2024, she was honoured again as '
+      'the Outstanding Midwife for the Neonatal Resuscitation Team at '
+      'Greater Accra Regional Hospital, Ridge.';
 
   static const List<ProfessionalGroup> groups = [
     ProfessionalGroup(
@@ -260,20 +279,7 @@ class Leadership {
         role: coordinatorRole,
         phone: '0278060762',
         photoAsset: '$_photos/racheal.jpg',
-        bio:
-            'Racheal is a dedicated healthcare professional and an advocate '
-            'for maternal and child health, with specialized expertise in '
-            'nursing, midwifery practice, and public health education. With a '
-            'decade of hands-on experience in both small clinics and large, '
-            'state-of-the-art health facilities, she brings a wealth of '
-            'clinical knowledge and practical insight into maternal and '
-            'reproductive health.\n\n'
-            'In 2023, she was nominated as the Outstanding Midwife at the '
-            'Greater Accra Regional Hospital and received the Best Practicing '
-            'Midwife Award for the Greater Accra Region during the '
-            'International Day of Midwives. In 2024, she was honoured again as '
-            'the Outstanding Midwife for the Neonatal Resuscitation Team at '
-            'Greater Accra Regional Hospital, Ridge.',
+        bio: _rachealBio,
       ),
       secretary: Leader(
         name: 'Miss Doreen O. Annang',

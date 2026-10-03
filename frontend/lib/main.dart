@@ -428,7 +428,11 @@ class _HomeShellState extends State<HomeShell> {
               icon: Icon(Icons.people_outline),
               label: 'Directory',
             ),
-            BottomNavigationBarItem(icon: _ChatsTabIcon(), label: 'Chats'),
+            BottomNavigationBarItem(
+              icon: _ChatsTabIcon(),
+              activeIcon: _ChatsTabIcon(active: true),
+              label: 'Chats',
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.info_outline_rounded),
               activeIcon: Icon(Icons.info_rounded),
@@ -443,7 +447,10 @@ class _HomeShellState extends State<HomeShell> {
 
 /// Chats tab icon with the total unread count bubbled on its corner.
 class _ChatsTabIcon extends StatelessWidget {
-  const _ChatsTabIcon();
+  /// Filled when the Chats tab is selected, like the Home tab's icon.
+  final bool active;
+
+  const _ChatsTabIcon({this.active = false});
 
   @override
   Widget build(BuildContext context) {
@@ -452,7 +459,7 @@ class _ChatsTabIcon extends StatelessWidget {
       builder: (context, counts, _) => Stack(
         clipBehavior: Clip.none,
         children: [
-          const Icon(Icons.chat_bubble_outline),
+          Icon(active ? Icons.forum : Icons.forum_outlined),
           if (counts.total > 0)
             Positioned(
               right: -14,

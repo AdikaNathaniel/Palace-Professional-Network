@@ -96,11 +96,7 @@ class _Paragraph extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: TextStyle(
-      fontSize: 13.5,
-      height: 1.45,
-      color: AppColors.textDark,
-    ),
+    style: TextStyle(fontSize: 13.5, height: 1.45, color: AppColors.textDark),
   );
 }
 
@@ -219,13 +215,19 @@ class _ChiefCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _LeaderRow(leader: chief, avatarRadius: 26),
+            // The section heading above already names the role.
+            const _LeaderRow(
+              leader: chief,
+              avatarRadius: 26,
+              showRole: false,
+              singleLineName: true,
+            ),
             const SizedBox(height: 10),
             Text(
-              'Oversees all the Professional Groups in IPC: provides overall '
-              'leadership, coordinates meetings and activities, represents '
-              'the groups before church leadership, and organises the annual '
-              'professional conference.',
+              'Racheal oversees all the Professional Groups in IPC. She '
+              'provides overall leadership, coordinates meetings and '
+              'activities, represents the groups before church leadership, '
+              'and organises the annual professional conference.',
               style: TextStyle(
                 fontSize: 13,
                 height: 1.4,
@@ -295,7 +297,17 @@ class _GroupCard extends StatelessWidget {
 class _LeaderRow extends StatelessWidget {
   final Leader leader;
   final double avatarRadius;
-  const _LeaderRow({required this.leader, this.avatarRadius = 22});
+  final bool showRole;
+
+  /// Keep the name on one line, shrinking it slightly if it doesn't fit.
+  final bool singleLineName;
+
+  const _LeaderRow({
+    required this.leader,
+    this.avatarRadius = 22,
+    this.showRole = true,
+    this.singleLineName = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -308,25 +320,16 @@ class _LeaderRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                leader.name,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: AppColors.textDark,
+              _name(),
+              if (showRole)
+                Text(
+                  leader.role,
+                  style: const TextStyle(fontSize: 12, color: AppColors.violet),
                 ),
-              ),
-              Text(
-                leader.role,
-                style: const TextStyle(fontSize: 12, color: AppColors.violet),
-              ),
               if (phone != null)
                 Text(
                   phone,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                 ),
               if (leader.bio != null)
                 Text(
@@ -359,6 +362,25 @@ class _LeaderRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       onTap: () => _showBio(context, leader),
       child: row,
+    );
+  }
+
+  Widget _name() {
+    final text = Text(
+      leader.name,
+      maxLines: singleLineName ? 1 : null,
+      softWrap: !singleLineName,
+      style: TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 14,
+        color: AppColors.textDark,
+      ),
+    );
+    if (!singleLineName) return text;
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: text,
     );
   }
 
@@ -441,19 +463,6 @@ class _LeaderAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final photo = leader.photoAsset;
     if (photo == null) {
-      // Placeholder (e.g. the Chief, not yet announced) gets an icon rather
-      // than initials of "To be announced".
-      if (identical(leader, Leadership.chiefCoordinator)) {
-        return CircleAvatar(
-          radius: radius,
-          backgroundColor: AppColors.violet.withValues(alpha: 0.12),
-          child: Icon(
-            Icons.person_outline,
-            color: AppColors.violet,
-            size: radius,
-          ),
-        );
-      }
       return ProfileAvatar(imageUrl: null, name: leader.name, radius: radius);
     }
     return CircleAvatar(
