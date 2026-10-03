@@ -41,7 +41,7 @@ class BiodataCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       entry.professionSubCategory ?? entry.professionCategory,
-                      style: const TextStyle(color: AppColors.violetDark, fontSize: 13),
+                      style: TextStyle(color: AppColors.violetDark, fontSize: 13),
                     ),
                     const SizedBox(height: 6),
                     _InfoRow(icon: Icons.work_outline, text: entry.placeOfWork),
@@ -77,7 +77,7 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
               overflow: TextOverflow.ellipsis,
             ),
           ),

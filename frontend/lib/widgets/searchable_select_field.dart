@@ -50,7 +50,7 @@ class SearchableSelectField extends FormField<String> {
                decoration: InputDecoration(
                  hintText: hint,
                  errorText: field.errorText,
-                 suffixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+                 suffixIcon: Icon(Icons.search, color: AppColors.textMuted),
                ),
                child: value == null
                    ? null
@@ -207,7 +207,7 @@ class _SearchSheetState extends State<_SearchSheet> {
                         child: Text(
                           'No matches for "$_query"',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppColors.textMuted),
+                          style: TextStyle(color: AppColors.textMuted),
                         ),
                       ),
                     )

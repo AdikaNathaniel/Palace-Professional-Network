@@ -42,7 +42,7 @@ class BiodataDetailPage extends StatelessWidget {
           Text(
             entry.professionSubCategory ?? entry.professionCategory,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.violetDark, fontSize: 14),
+            style: TextStyle(color: AppColors.violetDark, fontSize: 14),
           ),
           if (!_isMe) ...[
             const SizedBox(height: 16),
@@ -113,7 +113,7 @@ class _DetailCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.fieldBorder),
       ),
@@ -143,7 +143,7 @@ class _DetailRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                Text(label, style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                 const SizedBox(height: 2),
                 Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               ],

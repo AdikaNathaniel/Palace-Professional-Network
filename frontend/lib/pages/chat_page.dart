@@ -677,7 +677,7 @@ class _ChatPageState extends State<ChatPage> {
       return _ChatErrorState(message: _connectionError!, onRetry: _retry);
     }
     if (_messages.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No messages yet. Say hello!',
           style: TextStyle(color: AppColors.textMuted),
@@ -745,13 +745,13 @@ class _DaySeparator extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: AppColors.fieldBorder),
           ),
           child: Text(
             label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
         ),
       ),
@@ -778,7 +778,7 @@ class _ChatErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: AppColors.textMuted),
             ),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: onRetry, child: const Text('Retry')),

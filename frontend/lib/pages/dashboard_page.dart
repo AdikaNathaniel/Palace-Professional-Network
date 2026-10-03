@@ -62,14 +62,14 @@ class DashboardPageState extends State<DashboardPage> {
                   ? 'Welcome back, ${widget.session.fullName}'
                   : 'Welcome to the Palace Professional Network',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textDark,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Connecting IPC professionals for mentorship and support',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: AppColors.textMuted),
@@ -80,7 +80,7 @@ class DashboardPageState extends State<DashboardPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Tap a category to see everyone in that group',
               style: TextStyle(fontSize: 12, color: AppColors.textMuted),
             ),
@@ -95,7 +95,7 @@ class DashboardPageState extends State<DashboardPage> {
                   );
                 }
                 if (!optionsSnapshot.hasData) {
-                  return const Padding(
+                  return Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Text(
                       'Could not load profession categories.',

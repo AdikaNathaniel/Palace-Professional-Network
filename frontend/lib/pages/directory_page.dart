@@ -94,7 +94,7 @@ class DirectoryPageState extends State<DirectoryPage> {
                     avatar: const Icon(Icons.filter_alt, size: 16, color: AppColors.violet),
                     label: Text(ProfessionImages.shortLabel(_categoryFilter!)),
                     backgroundColor: AppColors.background,
-                    side: const BorderSide(color: AppColors.fieldBorder),
+                    side: BorderSide(color: AppColors.fieldBorder),
                     onDeleted: _clearCategoryFilter,
                   ),
                 ),
@@ -117,7 +117,7 @@ class DirectoryPageState extends State<DirectoryPage> {
                       .toList();
                   if (entries.isEmpty) {
                     return ListView(
-                      children: const [
+                      children: [
                         SizedBox(height: 80),
                         Center(
                           child: Text(
@@ -188,7 +188,7 @@ class _ErrorState extends StatelessWidget {
             Text(
               'Could not load the directory.\n$message',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: AppColors.textMuted),
             ),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: onRetry, child: const Text('Retry')),

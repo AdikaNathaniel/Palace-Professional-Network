@@ -10,7 +10,7 @@ class NotificationsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Notifications')),
-      body: const Center(
+      body: Center(
         child: Padding(
           padding: EdgeInsets.all(32),
           child: Column(

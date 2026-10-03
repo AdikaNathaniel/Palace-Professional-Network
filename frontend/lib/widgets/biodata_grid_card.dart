@@ -23,7 +23,7 @@ class BiodataGridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final imageUrl = ApiService.resolveImageUrl(entry.imageUrl);
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -66,7 +66,7 @@ class BiodataGridCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 2),
                     child: Icon(Icons.work_outline, size: 12, color: AppColors.textMuted),
                   ),
@@ -77,7 +77,7 @@ class BiodataGridCard extends StatelessWidget {
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.15),
+                      style: TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.15),
                     ),
                   ),
                 ],

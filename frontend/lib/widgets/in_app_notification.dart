@@ -81,7 +81,7 @@ class _Banner extends StatelessWidget {
               child: Material(
                 elevation: 8,
                 borderRadius: BorderRadius.circular(16),
-                color: Colors.white,
+                color: AppColors.surface,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
                   onTap: onTap,
@@ -104,7 +104,7 @@ class _Banner extends StatelessWidget {
                                 title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textDark,
                                 ),
@@ -114,7 +114,7 @@ class _Banner extends StatelessWidget {
                                 body,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textMuted,
                                 ),

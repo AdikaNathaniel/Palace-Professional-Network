@@ -214,7 +214,7 @@ class _BiodataFormPageState extends State<BiodataFormPage> {
           children: [
             const Center(child: IpcLogo()),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'International Palace Church',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -223,7 +223,7 @@ class _BiodataFormPageState extends State<BiodataFormPage> {
                 color: AppColors.violetDark,
               ),
             ),
-            const Text(
+            Text(
               'Professional Network Biodata Form',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: AppColors.textMuted),
@@ -237,7 +237,7 @@ class _BiodataFormPageState extends State<BiodataFormPage> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.fieldBorder),
                 ),
-                child: const Text(
+                child: Text(
                   "We found your existing biodata. Update anything that's changed below.",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12.5, color: AppColors.violetDark),
@@ -398,7 +398,7 @@ class _BiodataFormPageState extends State<BiodataFormPage> {
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
           text,
-          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark),
+          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark),
         ),
       );
 
@@ -440,7 +440,7 @@ class _ErrorState extends StatelessWidget {
             Text(
               'Could not reach the server.\n$message',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: AppColors.textMuted),
             ),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: onRetry, child: const Text('Retry')),

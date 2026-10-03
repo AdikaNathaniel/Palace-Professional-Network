@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   const Center(child: IpcIconRound(radius: 56)),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Palace Professional Network',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                       color: AppColors.violetDark,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Log in to continue',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13, color: AppColors.textMuted),

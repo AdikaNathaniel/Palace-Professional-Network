@@ -17,7 +17,7 @@ class UnreadBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.danger,
         borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(color: AppColors.surface, width: 1.5),
       ),
       child: Text(
         count > 99 ? '99+' : '$count',

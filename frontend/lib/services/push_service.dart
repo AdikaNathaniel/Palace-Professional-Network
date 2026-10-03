@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'chat_media_service.dart';
-import 'unread_service.dart';
+import 'inbox_service.dart';
 
 /// Push notifications for new chat messages (Firebase Cloud Messaging).
 ///
@@ -63,11 +63,11 @@ class PushService {
       await _openedSub?.cancel();
       _openedSub = FirebaseMessaging.onMessageOpenedApp.listen(open);
       // While the app is open Android doesn't show the notification itself,
-      // so the app shows its own banner, and the unread badges catch up
-      // immediately rather than on the next poll.
+      // so the app shows its own banner, and the chat list and unread
+      // badges catch up immediately (in case the inbox socket missed it).
       await _foregroundSub?.cancel();
       _foregroundSub = FirebaseMessaging.onMessage.listen((message) {
-        UnreadService.refresh();
+        InboxService.notifyChanged();
         final roomId = message.data['roomId'] as String?;
         if (roomId == null || roomId.isEmpty || roomId == activeRoomId) return;
         onForegroundMessage(

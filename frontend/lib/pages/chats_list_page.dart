@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/chat_message.dart';
 import '../models/session.dart';
 import '../services/api_service.dart';
+import '../services/inbox_service.dart';
 import '../services/unread_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/chat_rooms.dart';
@@ -27,6 +28,21 @@ class ChatsListPageState extends State<ChatsListPage> {
   void initState() {
     super.initState();
     _load();
+    InboxService.changes.addListener(_reloadConversations);
+  }
+
+  @override
+  void dispose() {
+    InboxService.changes.removeListener(_reloadConversations);
+    super.dispose();
+  }
+
+  /// A message arrived somewhere: refresh the previews in place. The list
+  /// keeps showing until the new one loads (see the builders below), so
+  /// there's no spinner flash.
+  void _reloadConversations() {
+    if (!mounted) return;
+    setState(() => _dmRoomsFuture = ApiService.fetchDmRooms());
   }
 
   void _load() {
@@ -100,7 +116,7 @@ class ChatsListPageState extends State<ChatsListPage> {
                 }
                 final category = snapshot.data;
                 if (category == null || category.isEmpty) {
-                  return const Padding(
+                  return Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Text(
                       'Submit your biodata to join your profession\'s group chat.',
@@ -120,7 +136,7 @@ class ChatsListPageState extends State<ChatsListPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Message someone from their profile in the Directory to start a conversation.',
               style: TextStyle(fontSize: 12, color: AppColors.textMuted),
             ),
@@ -128,7 +144,8 @@ class ChatsListPageState extends State<ChatsListPage> {
             FutureBuilder<List<DmRoomPreview>>(
               future: _dmRoomsFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
+                if (snapshot.connectionState != ConnectionState.done &&
+                    !snapshot.hasData) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Center(child: CircularProgressIndicator()),
@@ -139,13 +156,13 @@ class ChatsListPageState extends State<ChatsListPage> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Text(
                       'Could not load conversations.\n${snapshot.error}',
-                      style: const TextStyle(color: AppColors.textMuted),
+                      style: TextStyle(color: AppColors.textMuted),
                     ),
                   );
                 }
                 final rooms = snapshot.data ?? [];
                 if (rooms.isEmpty) {
-                  return const Padding(
+                  return Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Text(
                       'No conversations yet.',
@@ -260,7 +277,7 @@ class _DmTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -296,7 +313,7 @@ class _DmTile extends StatelessWidget {
                         room.lastMessage,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textMuted,
                         ),

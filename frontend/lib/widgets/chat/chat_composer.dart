@@ -302,7 +302,7 @@ class ChatComposerState extends State<ChatComposer> {
                   const SizedBox(width: 8),
                   Text(
                     widget.busyLabel!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12.5,
                       color: AppColors.textMuted,
                     ),
@@ -353,7 +353,7 @@ class ChatComposerState extends State<ChatComposer> {
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: AppColors.fieldBorder),
             ),
@@ -413,7 +413,7 @@ class ChatComposerState extends State<ChatComposer> {
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: AppColors.fieldBorder),
             ),
@@ -427,7 +427,7 @@ class ChatComposerState extends State<ChatComposer> {
                         style: const TextStyle(fontSize: 15),
                       ),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Recording…',
                           overflow: TextOverflow.ellipsis,
@@ -472,7 +472,7 @@ class ChatComposerState extends State<ChatComposer> {
                               ? _previewPosition
                               : total,
                         ),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textMuted,
                         ),
@@ -533,7 +533,7 @@ class ChatComposerState extends State<ChatComposer> {
         ),
         if (widget.editing == null)
           IconButton(
-            icon: const Icon(Icons.attach_file, color: AppColors.textMuted),
+            icon: Icon(Icons.attach_file, color: AppColors.textMuted),
             onPressed: widget.onAttach,
           ),
       ],
@@ -616,7 +616,7 @@ class _Banner extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(8, 6, 8, 0),
       padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: const Border(
           left: BorderSide(color: AppColors.violet, width: 4),
@@ -642,7 +642,7 @@ class _Banner extends StatelessWidget {
                   body,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     color: AppColors.textMuted,
                   ),

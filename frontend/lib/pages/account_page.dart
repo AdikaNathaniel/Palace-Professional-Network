@@ -91,7 +91,7 @@ class AccountPageState extends State<AccountPage> {
                           children: [
                             Text(
                               name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 17,
                                 color: AppColors.textDark,
@@ -100,7 +100,7 @@ class AccountPageState extends State<AccountPage> {
                             const SizedBox(height: 2),
                             Text(
                               widget.session.phoneNumber,
-                              style: const TextStyle(color: AppColors.textMuted),
+                              style: TextStyle(color: AppColors.textMuted),
                             ),
                             if (mine != null) ...[
                               const SizedBox(height: 2),
@@ -108,7 +108,7 @@ class AccountPageState extends State<AccountPage> {
                                 mine.professionCategory,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12.5,
                                   color: AppColors.violetDark,
                                 ),
@@ -140,7 +140,7 @@ class AccountPageState extends State<AccountPage> {
             _item(
               icon: Icons.settings_outlined,
               title: 'Settings',
-              subtitle: 'Change your PIN',
+              subtitle: 'Change your PIN, light or dark theme',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SettingsPage()),
               ),

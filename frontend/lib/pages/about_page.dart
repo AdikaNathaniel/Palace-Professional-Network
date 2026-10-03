@@ -62,7 +62,7 @@ class AboutPage extends StatelessWidget {
           const SizedBox(height: 20),
           const _Heading('Professional Groups'),
           const SizedBox(height: 2),
-          const Text(
+          Text(
             'Tap a group to see its leaders',
             style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
@@ -81,7 +81,7 @@ class _Heading extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: const TextStyle(
+    style: TextStyle(
       fontWeight: FontWeight.bold,
       fontSize: 15,
       color: AppColors.textDark,
@@ -96,7 +96,7 @@ class _Paragraph extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: const TextStyle(
+    style: TextStyle(
       fontSize: 13.5,
       height: 1.45,
       color: AppColors.textDark,
@@ -120,7 +120,7 @@ class _SectionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
                 color: AppColors.violetDark,
@@ -164,7 +164,7 @@ class _RoleLine extends StatelessWidget {
                   ),
                   TextSpan(
                     text: duty,
-                    style: const TextStyle(color: AppColors.textMuted),
+                    style: TextStyle(color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -221,7 +221,7 @@ class _ChiefCard extends StatelessWidget {
           children: [
             const _LeaderRow(leader: chief, avatarRadius: 26),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'Oversees all the Professional Groups in IPC: provides overall '
               'leadership, coordinates meetings and activities, represents '
               'the groups before church leadership, and organises the annual '
@@ -265,7 +265,7 @@ class _GroupCard extends StatelessWidget {
           ),
           title: Text(
             group.name,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 14,
               color: AppColors.textDark,
@@ -273,7 +273,7 @@ class _GroupCard extends StatelessWidget {
           ),
           subtitle: Text(
             group.coordinator.name,
-            style: const TextStyle(fontSize: 12, color: AppColors.violetDark),
+            style: TextStyle(fontSize: 12, color: AppColors.violetDark),
           ),
           children: [
             for (final leader in group.leaders) ...[
@@ -310,7 +310,7 @@ class _LeaderRow extends StatelessWidget {
             children: [
               Text(
                 leader.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                   color: AppColors.textDark,
@@ -323,13 +323,13 @@ class _LeaderRow extends StatelessWidget {
               if (phone != null)
                 Text(
                   phone,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textMuted,
                   ),
                 ),
               if (leader.bio != null)
-                const Text(
+                Text(
                   'Tap to read bio',
                   style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                 ),
@@ -386,7 +386,7 @@ class _LeaderRow extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       // Sized to the bio itself (no empty space under short ones); long
       // bios stop at 90% of the screen and scroll.
       constraints: BoxConstraints(
@@ -404,7 +404,7 @@ class _LeaderRow extends StatelessWidget {
               Text(
                 leader.name,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: AppColors.textDark,
@@ -418,7 +418,7 @@ class _LeaderRow extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 leader.bio!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   height: 1.5,
                   color: AppColors.textDark,

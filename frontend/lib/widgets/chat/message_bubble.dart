@@ -56,7 +56,7 @@ class MessageBubble extends StatelessWidget {
         decoration: _isSticker
             ? null
             : BoxDecoration(
-                color: isMine ? AppColors.violet : Colors.white,
+                color: isMine ? AppColors.violet : AppColors.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(14),
                   topRight: const Radius.circular(14),
@@ -349,7 +349,7 @@ class _ImageContent extends StatelessWidget {
                 errorBuilder: (_, _, _) => Container(
                   color: AppColors.background,
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     Icons.broken_image_outlined,
                     color: AppColors.textMuted,
                   ),
@@ -462,7 +462,7 @@ class _ReactionsChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.fieldBorder),
           boxShadow: const [
@@ -475,7 +475,7 @@ class _ReactionsChip extends StatelessWidget {
         ),
         child: Text(
           '${emojis.take(3).join()}${reactions.length > 1 ? ' ${reactions.length}' : ''}',
-          style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+          style: TextStyle(fontSize: 13, color: AppColors.textDark),
         ),
       ),
     );
@@ -522,11 +522,11 @@ class _SwipeToReplyState extends State<_SwipeToReply> {
         children: [
           Opacity(
             opacity: (_dx / _trigger).clamp(0.0, 1.0),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.only(left: 4),
               child: CircleAvatar(
                 radius: 14,
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.surface,
                 child: Icon(Icons.reply, size: 18, color: AppColors.violet),
               ),
             ),

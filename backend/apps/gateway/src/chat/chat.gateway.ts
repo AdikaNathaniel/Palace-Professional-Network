@@ -28,8 +28,14 @@ type MessageRef = { roomId: string; messageId: string };
 /// since a socket connection is inherently already "logged in" once verified.
 ///
 /// Server -> client events: history, message, messageUpdated, typing, read,
-/// chatError. Anything that changes an existing message (reactions, edits,
+/// chatError, inbox. Anything that changes an existing message (reactions, edits,
 /// deletes, poll votes) is re-broadcast whole as `messageUpdated`.
+///
+/// `inbox` ({ roomId }) tells an app that one of its chats has a new message,
+/// so its chat list and unread badges update without waiting for a refresh.
+/// It goes to the `user::<phone>` room every socket joins on connect (for
+/// DMs), and to `watch::<roomId>` rooms an app joins via `watch` (for its
+/// profession group chat).
 @WebSocketGateway({ cors: { origin: '*' } })
 @UsePipes(new ValidationPipe({ whitelist: true }))
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -56,6 +62,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const payload = await this.jwtService.verifyAsync(token);
       socket.data.phoneNumber = payload.sub;
+      await socket.join(ChatGateway.userRoom(payload.sub));
     } catch {
       socket.disconnect(true);
     }
@@ -87,6 +94,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (err) {
       this.emitError(socket, err);
     }
+  }
+
+  /// The app's inbox connection asks for `inbox` events about these group
+  /// chats. Only the room id is ever sent, never message content.
+  @SubscribeMessage('watch')
+  async onWatch(
+    @ConnectedSocket() socket: AuthedSocket,
+    @MessageBody() data: { roomIds?: string[] },
+  ) {
+    const roomIds = (Array.isArray(data?.roomIds) ? data.roomIds : [])
+      .filter((id): id is string => typeof id === 'string' && id.startsWith('cat::'))
+      .slice(0, 20);
+    if (roomIds.length) await socket.join(roomIds.map((id) => ChatGateway.watchRoom(id)));
   }
 
   @SubscribeMessage('leave')
@@ -135,6 +155,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         phoneNumber: senderPhone,
         isTyping: false,
       });
+      this.notifyInbox(data.roomId);
 
       // Push-notify everyone else, except people looking at this chat now.
       const viewers = await this.server.in(data.roomId).fetchSockets();
@@ -230,6 +251,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (err) {
       this.emitError(socket, err);
     }
+  }
+
+  private static userRoom(phoneNumber: string) {
+    return `user::${phoneNumber}`;
+  }
+
+  private static watchRoom(roomId: string) {
+    return `watch::${roomId}`;
+  }
+
+  private notifyInbox(roomId: string) {
+    const targets = roomId.startsWith('dm::')
+      ? roomId.split('::').slice(1).map((phone) => ChatGateway.userRoom(phone))
+      : [ChatGateway.watchRoom(roomId)];
+    this.server.to(targets).emit('inbox', { roomId });
   }
 
   private async markRead(socket: AuthedSocket, roomId: string) {

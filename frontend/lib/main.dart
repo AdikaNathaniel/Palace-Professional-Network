@@ -9,8 +9,10 @@ import 'pages/dashboard_page.dart';
 import 'pages/directory_page.dart';
 import 'pages/login_page.dart';
 import 'services/api_service.dart';
+import 'services/inbox_service.dart';
 import 'services/push_service.dart';
 import 'services/session_service.dart';
+import 'services/theme_service.dart';
 import 'services/unread_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/edge_bulge_page_view.dart';
@@ -20,11 +22,44 @@ import 'widgets/unread_badge.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await PushService.init();
+  await ThemeService.load();
   runApp(const PalaceProfessionalNetworkApp());
 }
 
-class PalaceProfessionalNetworkApp extends StatelessWidget {
+class PalaceProfessionalNetworkApp extends StatefulWidget {
   const PalaceProfessionalNetworkApp({super.key});
+
+  @override
+  State<PalaceProfessionalNetworkApp> createState() =>
+      _PalaceProfessionalNetworkAppState();
+}
+
+class _PalaceProfessionalNetworkAppState
+    extends State<PalaceProfessionalNetworkApp> {
+  @override
+  void initState() {
+    super.initState();
+    ThemeService.mode.addListener(_onThemeChanged);
+  }
+
+  @override
+  void dispose() {
+    ThemeService.mode.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  /// Many widgets read AppColors directly rather than through Theme.of, so
+  /// they wouldn't notice the switch on their own: rebuild every widget in
+  /// the app (including screens pushed on top, like Settings) once.
+  void _onThemeChanged() {
+    void rebuild(Element element) {
+      element.markNeedsBuild();
+      element.visitChildren(rebuild);
+    }
+
+    (context as Element).visitChildren(rebuild);
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +67,8 @@ class PalaceProfessionalNetworkApp extends StatelessWidget {
       title: 'Palace Professional Network',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeService.mode.value,
       home: const AuthGate(),
     );
   }
@@ -144,6 +181,11 @@ class _HomeShellState extends State<HomeShell> {
   int _currentIndex = _dashboardTab;
   final _pageController = PageController();
 
+  /// Tabs visited before the current one, most recent last, so the phone's
+  /// back button returns to the previous tab instead of leaving the app.
+  /// Each tab appears at most once.
+  final List<int> _tabHistory = [];
+
   /// Set while a bottom-bar tap is animating across pages, so the pages it
   /// passes through on the way aren't refreshed.
   int? _tapTarget;
@@ -163,9 +205,16 @@ class _HomeShellState extends State<HomeShell> {
       _promptForBiodataIfMissing();
     }
     UnreadService.startPolling();
+    InboxService.start(widget.session.token);
     _lifecycle = AppLifecycleListener(
-      onResume: UnreadService.startPolling,
-      onPause: UnreadService.pausePolling,
+      onResume: () {
+        UnreadService.startPolling();
+        InboxService.resume();
+      },
+      onPause: () {
+        UnreadService.pausePolling();
+        InboxService.pause();
+      },
     );
     PushService.startForUser(
       onOpenChat: _openChatFromNotification,
@@ -198,6 +247,7 @@ class _HomeShellState extends State<HomeShell> {
     _pageController.dispose();
     _lifecycle.dispose();
     UnreadService.stopPolling();
+    InboxService.stop();
     super.dispose();
   }
 
@@ -243,6 +293,8 @@ class _HomeShellState extends State<HomeShell> {
             // Closes the form and, if it was opened from there, the Account
             // page too.
             Navigator.of(pageContext).popUntil((route) => route.isFirst);
+            // Their profession (and so group chat) may have changed.
+            InboxService.refreshWatch();
             _goToTab(_directoryTab);
           },
         ),
@@ -250,19 +302,43 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
+  /// Makes [index] the current tab. Unless going back, the tab being left
+  /// is remembered for the back button.
+  void _setTab(int index, {bool goingBack = false}) {
+    if (index == _currentIndex) return;
+    // The tab being opened is no longer "behind" the user.
+    _tabHistory.remove(index);
+    if (!goingBack) {
+      _tabHistory
+        ..remove(_currentIndex)
+        ..add(_currentIndex);
+    }
+    setState(() => _currentIndex = index);
+  }
+
   void _goToTab(int index) {
     if (_pageController.hasClients) _pageController.jumpToPage(index);
-    setState(() => _currentIndex = index);
+    _setTab(index);
     _refreshTab(index);
   }
 
-  Future<void> _onNavTap(int index) async {
+  Future<void> _onNavTap(int index) => _animateToTab(index);
+
+  /// Back button: previous tab, then Home, then (from Home) leave the app.
+  void _onBackPressed() {
+    final previous = _tabHistory.isNotEmpty
+        ? _tabHistory.removeLast()
+        : _dashboardTab;
+    _animateToTab(previous, goingBack: true);
+  }
+
+  Future<void> _animateToTab(int index, {bool goingBack = false}) async {
     if (index == _currentIndex) {
       _refreshTab(index);
       return;
     }
     _tapTarget = index;
-    setState(() => _currentIndex = index);
+    _setTab(index, goingBack: goingBack);
     await _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 320),
@@ -274,7 +350,7 @@ class _HomeShellState extends State<HomeShell> {
 
   void _onPageChanged(int index) {
     if (_tapTarget != null) return;
-    setState(() => _currentIndex = index);
+    _setTab(index);
     _refreshTab(index);
   }
 
@@ -299,7 +375,7 @@ class _HomeShellState extends State<HomeShell> {
 
   void _goToDirectoryWithCategory(String category) {
     _pageController.jumpToPage(_directoryTab);
-    setState(() => _currentIndex = _directoryTab);
+    _setTab(_directoryTab);
     // The Directory page is only built the first time it's shown, so wait
     // a frame for it to exist before filtering.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -321,37 +397,45 @@ class _HomeShellState extends State<HomeShell> {
       const AboutPage(),
     ];
 
-    return Scaffold(
-      // Swipe between tabs, with the violet edge-bulge effect.
-      body: EdgeBulgePageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        children: pages,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _currentIndex,
-        iconSize: 22,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        onTap: _onNavTap,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: 'Directory',
-          ),
-          BottomNavigationBarItem(icon: _ChatsTabIcon(), label: 'Chats'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.info_outline_rounded),
-            activeIcon: Icon(Icons.info_rounded),
-            label: 'About Us',
-          ),
-        ],
+    return PopScope(
+      // Only let the back button close the app from Home with nowhere left
+      // to go back to; otherwise it steps back through the tabs.
+      canPop: _currentIndex == _dashboardTab && _tabHistory.isEmpty,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBackPressed();
+      },
+      child: Scaffold(
+        // Swipe between tabs, with the violet edge-bulge effect.
+        body: EdgeBulgePageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          children: pages,
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _currentIndex,
+          iconSize: 22,
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
+          onTap: _onNavTap,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people_outline),
+              label: 'Directory',
+            ),
+            BottomNavigationBarItem(icon: _ChatsTabIcon(), label: 'Chats'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.info_outline_rounded),
+              activeIcon: Icon(Icons.info_rounded),
+              label: 'About Us',
+            ),
+          ],
+        ),
       ),
     );
   }

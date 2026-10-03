@@ -69,7 +69,7 @@ Future<MessageActionResult?> showMessageActions(
                     ),
                   ),
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.add_circle_outline,
                     color: AppColors.textMuted,
                   ),
@@ -241,13 +241,13 @@ Future<void> showPollVotesSheet(
                   ),
                   Text(
                     '${option.voters.length} ${option.voters.length == 1 ? 'vote' : 'votes'}',
-                    style: const TextStyle(color: AppColors.textMuted),
+                    style: TextStyle(color: AppColors.textMuted),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
               if (option.voters.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: Text(
                     'No votes',
@@ -538,14 +538,14 @@ class _StickerPickerSheetState extends State<_StickerPickerSheet> {
                                 ? error.message
                                 : 'Could not load stickers.',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textMuted),
+                            style: TextStyle(color: AppColors.textMuted),
                           ),
                         ),
                       );
                     }
                     final items = snapshot.data ?? [];
                     if (items.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Text(
                           'Nothing found',
                           style: TextStyle(color: AppColors.textMuted),
@@ -579,7 +579,7 @@ class _StickerPickerSheetState extends State<_StickerPickerSheet> {
                   },
                 ),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 6),
                 child: Text(
                   'Powered by GIPHY',
