@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/biodata.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/company_abbreviation.dart';
 
 class BiodataGridCard extends StatelessWidget {
   final Biodata entry;
@@ -50,14 +51,6 @@ class BiodataGridCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, height: 1.15),
               ),
-              const SizedBox(height: 4),
-              Text(
-                entry.professionSubCategory ?? entry.professionCategory,
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.violetDark, fontSize: 11.5, height: 1.2),
-              ),
               const SizedBox(height: 6),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -70,7 +63,7 @@ class BiodataGridCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      entry.placeOfWork,
+                      CompanyAbbreviation.shorten(entry.placeOfWork),
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

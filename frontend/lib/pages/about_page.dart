@@ -22,26 +22,6 @@ class AboutPage extends StatelessWidget {
           const Center(child: IpcLogo(maxWidth: 180)),
           const SizedBox(height: 20),
           const _SectionCard(
-            title: 'Palace Professional Network',
-            children: [
-              _Paragraph(
-                'The Palace Professional Network (PPN) is an initiative of the '
-                'leadership of International Palace Church (IPC). It brings '
-                'together members with similar professions, skills and trades '
-                'to foster networking, mentorship, collaboration and mutual '
-                'growth.',
-              ),
-              SizedBox(height: 10),
-              _Paragraph(
-                'This app is the home of the network. Use it to find fellow '
-                'professionals in the directory, browse by professional '
-                'group, keep your biodata up to date, and chat with members '
-                'and your group.',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const _SectionCard(
             title: 'How the network is led',
             children: [
               _Paragraph(
@@ -52,20 +32,23 @@ class AboutPage extends StatelessWidget {
               _RoleLine(
                 icon: Icons.star_rounded,
                 role: Leadership.coordinatorRole,
-                duty: 'Provides overall leadership, represents the group '
+                duty:
+                    'Provides overall leadership, represents the group '
                     'before church leadership, and coordinates meetings and '
                     'professional events.',
               ),
               _RoleLine(
                 icon: Icons.edit_note_rounded,
                 role: Leadership.secretaryRole,
-                duty: 'Assists the Coordinator, keeps records and minutes, '
+                duty:
+                    'Assists the Coordinator, keeps records and minutes, '
                     'and manages communication and membership records.',
               ),
               _RoleLine(
                 icon: Icons.handshake_outlined,
                 role: Leadership.principalMemberRole,
-                duty: 'Handles the legwork of the group: logistics, '
+                duty:
+                    'Handles the legwork of the group: logistics, '
                     'operations and other tasks.',
               ),
             ],
@@ -97,13 +80,13 @@ class _Heading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-          color: AppColors.textDark,
-        ),
-      );
+    text,
+    style: const TextStyle(
+      fontWeight: FontWeight.bold,
+      fontSize: 15,
+      color: AppColors.textDark,
+    ),
+  );
 }
 
 class _Paragraph extends StatelessWidget {
@@ -112,13 +95,13 @@ class _Paragraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 13.5,
-          height: 1.45,
-          color: AppColors.textDark,
-        ),
-      );
+    text,
+    style: const TextStyle(
+      fontSize: 13.5,
+      height: 1.45,
+      color: AppColors.textDark,
+    ),
+  );
 }
 
 class _SectionCard extends StatelessWidget {
@@ -357,7 +340,8 @@ class _LeaderRow extends StatelessWidget {
           IconButton(
             tooltip: 'Call',
             icon: const Icon(Icons.call_outlined, color: AppColors.violet),
-            onPressed: () => _launch(context, Uri.parse('tel:${_dialable(phone)}')),
+            onPressed: () =>
+                _launch(context, Uri.parse('tel:${_dialable(phone)}')),
           ),
           IconButton(
             tooltip: 'WhatsApp',
@@ -403,40 +387,45 @@ class _LeaderRow extends StatelessWidget {
       isScrollControlled: true,
       showDragHandle: true,
       backgroundColor: Colors.white,
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        builder: (ctx, scrollController) => ListView(
-          controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-          children: [
-            Center(child: _LeaderAvatar(leader: leader, radius: 48)),
-            const SizedBox(height: 12),
-            Text(
-              leader.name,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: AppColors.textDark,
+      // Sized to the bio itself (no empty space under short ones); long
+      // bios stop at 90% of the screen and scroll.
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(child: _LeaderAvatar(leader: leader, radius: 48)),
+              const SizedBox(height: 12),
+              Text(
+                leader.name,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: AppColors.textDark,
+                ),
               ),
-            ),
-            Text(
-              leader.role,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.violet),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              leader.bio!,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: AppColors.textDark,
+              Text(
+                leader.role,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.violet),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                leader.bio!,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -458,7 +447,11 @@ class _LeaderAvatar extends StatelessWidget {
         return CircleAvatar(
           radius: radius,
           backgroundColor: AppColors.violet.withValues(alpha: 0.12),
-          child: Icon(Icons.person_outline, color: AppColors.violet, size: radius),
+          child: Icon(
+            Icons.person_outline,
+            color: AppColors.violet,
+            size: radius,
+          ),
         );
       }
       return ProfileAvatar(imageUrl: null, name: leader.name, radius: radius);
