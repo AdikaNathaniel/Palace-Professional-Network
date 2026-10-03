@@ -10,6 +10,15 @@ class BiodataGridCard extends StatelessWidget {
 
   const BiodataGridCard({super.key, required this.entry, this.onTap});
 
+  /// Card height that fits its content - padding, photo, and two lines each
+  /// of name and place of work - grown with the phone's text-size setting
+  /// so text isn't cut off for people who use larger fonts.
+  static double heightFor(BuildContext context) {
+    const fixed = 32.0 + 60 + 8 + 6; // padding, photo, gaps
+    const textAt1x = 13.5 * 1.15 * 2 + 11 * 1.15 * 2; // name + place lines
+    return fixed + MediaQuery.textScalerOf(context).scale(textAt1x) + 6;
+  }
+
   @override
   Widget build(BuildContext context) {
     final imageUrl = ApiService.resolveImageUrl(entry.imageUrl);
@@ -33,7 +42,8 @@ class BiodataGridCard extends StatelessWidget {
             ],
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            // One-line names leave a little room; keep the content centred.
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircleAvatar(
                 radius: 30,

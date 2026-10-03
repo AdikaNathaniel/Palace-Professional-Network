@@ -130,11 +130,11 @@ class DirectoryPageState extends State<DirectoryPage> {
                   }
                   return GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
-                      childAspectRatio: 0.6,
+                      mainAxisExtent: BiodataGridCard.heightFor(context),
                     ),
                     itemCount: entries.length,
                     itemBuilder: (context, index) => BiodataGridCard(
