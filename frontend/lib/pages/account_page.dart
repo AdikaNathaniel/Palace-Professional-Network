@@ -126,13 +126,11 @@ class AccountPageState extends State<AccountPage> {
             _item(
               icon: Icons.badge_outlined,
               title: 'My Biodata',
-              subtitle: 'Edit your profile',
               onTap: widget.onOpenBiodata,
             ),
             _item(
               icon: Icons.notifications_none_rounded,
               title: 'Notifications',
-              subtitle: 'Announcements and updates',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const NotificationsPage()),
               ),
@@ -140,7 +138,6 @@ class AccountPageState extends State<AccountPage> {
             _item(
               icon: Icons.settings_outlined,
               title: 'Settings',
-              subtitle: 'Change your PIN, light or dark theme',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SettingsPage()),
               ),
