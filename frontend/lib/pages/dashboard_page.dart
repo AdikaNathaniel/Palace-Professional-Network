@@ -3,7 +3,7 @@ import '../models/biodata.dart';
 import '../models/session.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/ipc_logo.dart';
+import '../widgets/home_hero.dart';
 import '../widgets/profession_category_card.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -55,26 +55,20 @@ class DashboardPageState extends State<DashboardPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
           children: [
-            const Center(child: IpcLogo(maxWidth: 220)),
-            const SizedBox(height: 20),
+            const HomeHero(),
+            const SizedBox(height: 18),
+            // The app's name and tagline are on the picture above.
             Text(
               widget.session.fullName != null && widget.session.fullName!.isNotEmpty
                   ? 'Welcome back, ${widget.session.fullName}'
-                  : 'Welcome to the Palace Professional Network',
-              textAlign: TextAlign.center,
+                  : 'Welcome!',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textDark,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Connecting IPC professionals for mentorship and support',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
-            ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 22),
             const Text(
               'Browse by Profession',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
