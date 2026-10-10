@@ -21,38 +21,7 @@ class AboutPage extends StatelessWidget {
         children: [
           const Center(child: IpcLogo(maxWidth: 180)),
           const SizedBox(height: 20),
-          const _SectionCard(
-            title: 'How the network is led',
-            children: [
-              _Paragraph(
-                'A Chief Professional Coordinator oversees all the '
-                'Professional Groups in IPC. Each group is in turn led by:',
-              ),
-              SizedBox(height: 10),
-              _RoleLine(
-                icon: Icons.star_rounded,
-                role: Leadership.coordinatorRole,
-                duty:
-                    'Provides overall leadership, represents the group '
-                    'before church leadership, and coordinates meetings and '
-                    'professional events.',
-              ),
-              _RoleLine(
-                icon: Icons.edit_note_rounded,
-                role: Leadership.secretaryRole,
-                duty:
-                    'Assists the Coordinator, keeps records and minutes, '
-                    'and manages communication and membership records.',
-              ),
-              _RoleLine(
-                icon: Icons.handshake_outlined,
-                role: Leadership.principalMemberRole,
-                duty:
-                    'Handles the legwork of the group: logistics, '
-                    'operations and other tasks.',
-              ),
-            ],
-          ),
+          const _LeadershipStrip(),
           const SizedBox(height: 16),
           const _ConcernsBanner(),
           const SizedBox(height: 20),
@@ -89,85 +58,270 @@ class _Heading extends StatelessWidget {
   );
 }
 
-class _Paragraph extends StatelessWidget {
-  final String text;
-  const _Paragraph(this.text);
+/// "How the network is led", kept compact: one line on the Chief
+/// Coordinator, then the three group roles as chips. The chips take turns
+/// showing their duty (with a progress bar on the active one) until the
+/// user taps one, which then stays put.
+class _LeadershipStrip extends StatefulWidget {
+  const _LeadershipStrip();
 
   @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: TextStyle(fontSize: 13.5, height: 1.45, color: AppColors.textDark),
-  );
+  State<_LeadershipStrip> createState() => _LeadershipStripState();
 }
 
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-  const _SectionCard({required this.title, required this.children});
+class _LeadershipStripState extends State<_LeadershipStrip>
+    with TickerProviderStateMixin {
+  static const _roles = [
+    (
+      icon: Icons.star_rounded,
+      label: 'Coordinator',
+      title: Leadership.coordinatorRole,
+      duty:
+          'Leads the group, represents it before church leadership, and '
+          'coordinates meetings and professional events.',
+    ),
+    (
+      icon: Icons.edit_note_rounded,
+      label: 'Secretary',
+      title: Leadership.secretaryRole,
+      duty:
+          'Assists the Coordinator, keeps records and minutes, and manages '
+          'communication and membership records.',
+    ),
+    (
+      icon: Icons.handshake_outlined,
+      label: 'Principal Member',
+      title: Leadership.principalMemberRole,
+      duty:
+          "Handles the group's legwork: logistics, operations and other "
+          'tasks.',
+    ),
+  ];
+
+  int _selected = 0;
+  bool _autoPlay = true;
+
+  /// Time on each role while cycling; also drives the progress bar.
+  late final AnimationController _cycle = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  )..addStatusListener(_onCycleDone);
+
+  /// Chips slide and fade in one after another when the page opens.
+  late final AnimationController _intro = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      // Reduced motion: no cycling, no entrance.
+      _autoPlay = false;
+      _cycle.stop();
+      _intro.value = 1;
+    } else if (_intro.status == AnimationStatus.dismissed) {
+      _intro.forward();
+      _cycle.forward();
+    }
+  }
+
+  void _onCycleDone(AnimationStatus status) {
+    if (status != AnimationStatus.completed || !_autoPlay) return;
+    setState(() => _selected = (_selected + 1) % _roles.length);
+    _cycle.forward(from: 0);
+  }
+
+  void _select(int index) {
+    _cycle.stop();
+    setState(() {
+      _autoPlay = false;
+      _selected = index;
+    });
+  }
+
+  @override
+  void dispose() {
+    _cycle.dispose();
+    _intro.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final role = _roles[_selected];
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title,
+              'How the network is led',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 15,
                 color: AppColors.violetDark,
               ),
             ),
+            const SizedBox(height: 4),
+            Text(
+              'A Chief Professional Coordinator oversees all the groups. '
+              'Each group is led by:',
+              style: TextStyle(
+                fontSize: 12.5,
+                height: 1.35,
+                color: AppColors.textMuted,
+              ),
+            ),
             const SizedBox(height: 10),
-            ...children,
+            Row(
+              children: [
+                for (var i = 0; i < _roles.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  Expanded(child: _entrance(i, _chip(i))),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              alignment: Alignment.topLeft,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween(
+                      begin: const Offset(0.06, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                ),
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.topLeft,
+                  children: [...previous, ?current],
+                ),
+                child: Text.rich(
+                  key: ValueKey(_selected),
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${role.title}: ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      TextSpan(text: role.duty),
+                    ],
+                  ),
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-}
 
-class _RoleLine extends StatelessWidget {
-  final IconData icon;
-  final String role;
-  final String duty;
-  const _RoleLine({required this.icon, required this.role, required this.duty});
+  Widget _entrance(int index, Widget child) {
+    final curve = CurvedAnimation(
+      parent: _intro,
+      curve: Interval(index * 0.2, 0.6 + index * 0.2, curve: Curves.easeOut),
+    );
+    return FadeTransition(
+      opacity: curve,
+      child: SlideTransition(
+        position: Tween(
+          begin: const Offset(0, 0.3),
+          end: Offset.zero,
+        ).animate(curve),
+        child: child,
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.violet.withValues(alpha: 0.1),
-            child: Icon(icon, size: 18, color: AppColors.violet),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$role\n',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  TextSpan(
-                    text: duty,
-                    style: TextStyle(color: AppColors.textMuted),
-                  ),
-                ],
-              ),
-              style: const TextStyle(fontSize: 13, height: 1.4),
+  Widget _chip(int index) {
+    final role = _roles[index];
+    final selected = index == _selected;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _select(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.violet.withValues(alpha: 0.14)
+                : AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? AppColors.violet : AppColors.fieldBorder,
             ),
           ),
-        ],
+          child: Column(
+            children: [
+              AnimatedScale(
+                scale: selected ? 1.15 : 1,
+                duration: const Duration(milliseconds: 250),
+                child: Icon(
+                  role.icon,
+                  size: 20,
+                  color: selected ? AppColors.violet : AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Shrinks rather than cuts off "Principal Member" on narrow
+              // phones.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  role.label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: selected
+                        ? AppColors.violetDark
+                        : AppColors.textMuted,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Shows how long until the next role while cycling.
+              SizedBox(
+                height: 3,
+                child: selected && _autoPlay
+                    ? AnimatedBuilder(
+                        animation: _cycle,
+                        builder: (context, _) => ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: _cycle.value,
+                            minHeight: 3,
+                            backgroundColor: Colors.transparent,
+                            color: AppColors.violet,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
