@@ -5,10 +5,11 @@ import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/profile_avatar.dart';
 import 'notifications_page.dart';
+import 'presentation_page.dart';
 import 'settings_page.dart';
 
 /// Account page (opened from the Home app bar): who's signed in, plus My
-/// Biodata, Notifications, Settings and Log out.
+/// Biodata, Notifications, the PPN presentation, Settings and Log out.
 class AccountPage extends StatefulWidget {
   final UserSession session;
   final VoidCallback onOpenBiodata;
@@ -133,6 +134,13 @@ class AccountPageState extends State<AccountPage> {
               title: 'Notifications',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const NotificationsPage()),
+              ),
+            ),
+            _item(
+              icon: Icons.slideshow_outlined,
+              title: 'PPN Presentation',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PresentationPage()),
               ),
             ),
             _item(

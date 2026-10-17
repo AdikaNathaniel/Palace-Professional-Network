@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/theme_service.dart';
+import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 import 'change_pin_page.dart';
 
@@ -50,9 +51,65 @@ class SettingsPage extends StatelessWidget {
               icon: Icons.dark_mode_outlined,
               title: 'Dark',
             ),
+            const Divider(height: 24, indent: 20, endIndent: 20),
+            const _CheckForUpdatesTile(),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CheckForUpdatesTile extends StatefulWidget {
+  const _CheckForUpdatesTile();
+
+  @override
+  State<_CheckForUpdatesTile> createState() => _CheckForUpdatesTileState();
+}
+
+class _CheckForUpdatesTileState extends State<_CheckForUpdatesTile> {
+  late final Future<String> _versionFuture = UpdateService.currentVersion();
+  bool _checking = false;
+
+  Future<void> _check() async {
+    setState(() => _checking = true);
+    final result = await UpdateService.checkAndUpdate();
+    if (!mounted) return;
+    setState(() => _checking = false);
+
+    final message = switch (result) {
+      UpdateCheckResult.upToDate => 'You have the latest version.',
+      UpdateCheckResult.updating => 'Updating…',
+      UpdateCheckResult.cancelled => 'Update cancelled.',
+      UpdateCheckResult.openedStore => 'Opening Google Play…',
+      UpdateCheckResult.failed => 'Could not check for updates. Please try again later.',
+    };
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: AppColors.background,
+        child: const Icon(Icons.system_update_outlined, color: AppColors.violet),
+      ),
+      title: const Text('Check for updates'),
+      subtitle: FutureBuilder<String>(
+        future: _versionFuture,
+        builder: (context, snapshot) =>
+            Text(snapshot.hasData ? 'Version ${snapshot.data}' : 'Get the latest version'),
+      ),
+      trailing: _checking
+          ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            )
+          : const Icon(Icons.chevron_right),
+      onTap: _checking ? null : _check,
     );
   }
 }
