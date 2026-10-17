@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Top of the Home tab: the network picture with the app's name over it,
+/// Top of the Home tab: the app icon picture with the app's name over it,
 /// and the International Palace Church logo small in the top-right corner.
 class HomeHero extends StatelessWidget {
   const HomeHero({super.key});
@@ -14,7 +14,7 @@ class HomeHero extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset('assets/images/network.jpg', fit: BoxFit.cover),
+            Image.asset('assets/images/app_icon.png', fit: BoxFit.cover),
             // Darkens the bottom so the white title reads over the picture.
             const DecoratedBox(
               decoration: BoxDecoration(
