@@ -1,3 +1,5 @@
+import { File } from 'expo-file-system';
+
 import { request } from './client';
 import type {
   Biodata,
@@ -15,9 +17,15 @@ import type {
 /** The server rejects chat uploads over this size. */
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
-/** React Native's FormData takes `{ uri, name, type }` in place of a Blob. */
+/**
+ * The global fetch is expo/fetch, which doesn't accept React Native's
+ * `{ uri, name, type }` parts ("Unsupported FormDataPart implementation");
+ * it reads a part's contents through `bytes()`.
+ */
 function appendFile(form: FormData, field: string, file: LocalFile) {
-  form.append(field, { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob);
+  const local = new File(file.uri);
+  const part = { name: file.name, type: file.mimeType, bytes: () => local.bytes() };
+  form.append(field, part as unknown as Blob);
 }
 
 export const authApi = {

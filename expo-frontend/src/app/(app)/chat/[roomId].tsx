@@ -1,17 +1,13 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Stack } from 'expo-router/stack';
 
-import { PlaceholderScreen } from '@/components/placeholder-screen';
+import { ChatScreen } from '@/components/chat/chat-screen';
 
-export default function ChatScreen() {
-  const { roomId, title } = useLocalSearchParams<{ roomId: string; title?: string }>();
-  return (
-    <>
-      <Stack.Screen options={{ title: title ?? 'Chat' }} />
-      <PlaceholderScreen
-        title={`Room ${roomId}`}
-        flutterSource="pages/chat_page.dart, widgets/chat/*, services/chat_service.dart"
-      />
-    </>
-  );
+export default function ChatRoute() {
+  const { roomId, title, imageUrl } = useLocalSearchParams<{
+    roomId: string;
+    title?: string;
+    imageUrl?: string;
+  }>();
+  // Keyed so a different room always gets a fresh connection.
+  return <ChatScreen key={roomId} roomId={roomId} titleParam={title} imageParam={imageUrl} />;
 }

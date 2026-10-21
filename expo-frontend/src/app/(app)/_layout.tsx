@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 
 import { useMyBiodata } from '@/hooks/queries';
+import { useChatInbox } from '@/hooks/use-chat-inbox';
 import { useSession } from '@/stores/session';
 
 export const unstable_settings = { initialRouteName: '(tabs)' };
@@ -40,11 +41,30 @@ function useBiodataPrompt() {
 
 export default function AppLayout() {
   useBiodataPrompt();
+  useChatInbox();
 
   return (
     <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="chat/[roomId]" options={{ title: 'Chat' }} />
+      <Stack.Screen
+        name="chat/photo"
+        options={{
+          presentation: 'transparentModal',
+          animation: 'fade',
+          headerShown: false,
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
+      />
+      <Stack.Screen
+        name="chat/stickers"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.6, 1],
+          sheetGrabberVisible: true,
+          headerShown: false,
+        }}
+      />
       <Stack.Screen name="member/[id]" options={{ title: 'Member' }} />
       <Stack.Screen name="account" options={{ title: 'Account' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />

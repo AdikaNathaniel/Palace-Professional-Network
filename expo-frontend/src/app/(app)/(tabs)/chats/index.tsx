@@ -1,58 +1,119 @@
 import { LegendList } from '@legendapp/list/react-native';
-import { Link } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Stack } from 'expo-router/stack';
+import { useState } from 'react';
+import { Text, View } from 'react-native';
 
-import { Avatar } from '@/components/avatar';
+import { ChatListRow, type ChatListItem } from '@/components/chat/chat-list-row';
 import { QueryState } from '@/components/query-state';
-import { useDmRooms, useUnreadCounts } from '@/hooks/queries';
-import type { DmRoomPreview } from '@/lib/api/types';
+import { useDirectory, useDmRooms, useMyBiodata, useUnreadCounts } from '@/hooks/queries';
+import { parseDate } from '@/lib/chat/format';
+import { categoryRoomId, professionShortLabel } from '@/lib/chat/rooms';
 
-function RoomRow({ room, unread }: { room: DmRoomPreview; unread: number }) {
-  return (
-    <Link
-      href={{ pathname: '/chat/[roomId]', params: { roomId: room.roomId, title: room.otherName } }}
-      asChild>
-      <Pressable className="flex-row items-center gap-3 bg-background px-4 py-3 active:opacity-70">
-        <Avatar name={room.otherName} imageUrl={room.otherImageUrl} />
-        <View className="flex-1">
-          <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
-            {room.otherName || room.otherPhone}
-          </Text>
-          <Text className="text-sm text-muted" numberOfLines={1}>
-            {room.lastMessage}
-          </Text>
-        </View>
-        {unread > 0 ? (
-          <View className="min-w-6 items-center rounded-full bg-primary px-2 py-0.5">
-            <Text className="text-xs font-bold text-on-primary">{unread}</Text>
-          </View>
-        ) : null}
-      </Pressable>
-    </Link>
-  );
-}
-
-// TODO: port the profession group chats and timestamps from pages/chats_list_page.dart.
 export default function ChatsScreen() {
-  const { data, error, isLoading, isRefetching, refetch } = useDmRooms();
-  const { data: unread } = useUnreadCounts();
+  const [search, setSearch] = useState('');
+  const mine = useMyBiodata();
+  const dms = useDmRooms();
+  const unread = useUnreadCounts();
+  const directory = useDirectory();
+  const [refreshing, setRefreshing] = useState(false);
 
-  if (!data) {
-    return <QueryState isLoading={isLoading} error={error} onRetry={refetch} />;
+  const category = mine.data?.professionCategory;
+  const memberCount = category
+    ? (directory.data ?? []).filter((b) => b.professionCategory === category).length
+    : 0;
+
+  const items: ChatListItem[] = [];
+  if (category) {
+    const label = professionShortLabel(category);
+    items.push({
+      kind: 'group',
+      roomId: categoryRoomId(category),
+      title: label,
+      subtitle: memberCount
+        ? `Group chat · ${memberCount} ${memberCount === 1 ? 'member' : 'members'}`
+        : 'Group chat for your profession',
+    });
+  } else if (mine.isSuccess) {
+    items.push({ kind: 'join-group' });
+  }
+  for (const room of dms.data ?? []) {
+    items.push({
+      kind: 'dm',
+      roomId: room.roomId,
+      title: room.otherName || room.otherPhone,
+      subtitle: room.lastMessage,
+      phone: room.otherPhone,
+      imageUrl: room.otherImageUrl,
+      at: parseDate(room.lastMessageAt),
+    });
+  }
+
+  const query = search.trim().toLowerCase();
+  const visible = query
+    ? items.filter(
+        (item) =>
+          item.kind !== 'join-group' &&
+          (item.title.toLowerCase().includes(query) || item.subtitle.toLowerCase().includes(query)),
+      )
+    : items;
+
+  const refresh = async () => {
+    setRefreshing(true);
+    await Promise.all([dms.refetch(), unread.refetch(), mine.refetch()]);
+    setRefreshing(false);
+  };
+
+  if (!dms.data && !mine.data) {
+    return (
+      <QueryState
+        isLoading={dms.isLoading || mine.isLoading}
+        error={dms.error ?? mine.error}
+        onRetry={() => void refresh()}
+      />
+    );
   }
 
   return (
-    <LegendList
-      data={data}
-      keyExtractor={(item) => item.roomId}
-      renderItem={({ item }) => <RoomRow room={item} unread={unread?.rooms[item.roomId] ?? 0} />}
-      estimatedItemSize={72}
-      recycleItems
-      refreshing={isRefetching}
-      onRefresh={refetch}
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ flex: 1 }}
-      ListEmptyComponent={<QueryState emptyMessage="No conversations yet." />}
-    />
+    <>
+      <Stack.SearchBar
+        placeholder="Search"
+        onChangeText={(e) => setSearch(e.nativeEvent.text)}
+        onCancelButtonPress={() => setSearch('')}
+      />
+      <LegendList
+        data={visible}
+        extraData={unread.data}
+        keyExtractor={(item) => (item.kind === 'join-group' ? 'join-group' : item.roomId)}
+        getItemType={(item) => item.kind}
+        renderItem={({ item }) => (
+          <ChatListRow
+            item={item}
+            unread={item.kind === 'join-group' ? 0 : (unread.data?.rooms[item.roomId] ?? 0)}
+          />
+        )}
+        estimatedItemSize={76}
+        refreshing={refreshing}
+        onRefresh={refresh}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1 }}
+        className="bg-background"
+        ListEmptyComponent={
+          <View className="items-center px-8 py-16">
+            <Text className="text-center text-base text-muted">
+              {query ? `No chats match “${search.trim()}”.` : 'No conversations yet.'}
+            </Text>
+          </View>
+        }
+        ListFooterComponent={
+          query ? null : (
+            <Text className="px-8 py-6 text-center text-[13px] text-muted">
+              To start a conversation, open someone’s profile in the Directory and tap Message.
+            </Text>
+          )
+        }
+      />
+    </>
   );
 }
