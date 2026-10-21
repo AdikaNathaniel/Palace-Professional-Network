@@ -71,7 +71,8 @@ export default function AppLayout() {
       <Stack.Screen name="change-pin" options={{ title: 'Change PIN' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="presentation" options={{ title: 'PPN Presentation' }} />
-      <Stack.Screen name="biodata-form" options={{ title: 'My Biodata', presentation: 'modal' }} />
+      {/* Its own stack (biodata-form/_layout.tsx) draws the header. */}
+      <Stack.Screen name="biodata-form" options={{ presentation: 'modal', headerShown: false }} />
     </Stack>
   );
 }

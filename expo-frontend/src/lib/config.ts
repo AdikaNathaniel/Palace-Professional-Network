@@ -7,8 +7,12 @@
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL || 'https://palace-professional-network.onrender.com';
 
-/** Turns a server-relative upload path ("/uploads/x.jpg") into a full URL. */
+/**
+ * Turns a server-relative upload path ("/uploads/x.jpg") into a full URL.
+ * Anything that already has a scheme (https:, or file: for a photo picked
+ * on the device) is used as is.
+ */
 export function resolveMediaUrl(url?: string | null): string | undefined {
   if (!url) return undefined;
-  return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  return /^[a-z][a-z0-9+.-]*:/i.test(url) ? url : `${API_BASE_URL}${url}`;
 }

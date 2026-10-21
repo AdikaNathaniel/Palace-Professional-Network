@@ -29,9 +29,19 @@ export function useChatInbox() {
   const categoryRef = useRef(category);
 
   useEffect(() => {
+    const previous = categoryRef.current;
     categoryRef.current = category;
-    // Re-subscribe when the member's profession changes (biodata edited).
-    if (category) socketRef.current?.emit('watch', { roomIds: [categoryRoomId(category)] });
+    const socket = socketRef.current;
+    if (!category || !socket?.connected || category === previous) return;
+    if (previous) {
+      // The server only adds watched rooms, never removes them, so after a
+      // profession change (biodata edited) start a fresh connection; its
+      // connect handler watches just the new group.
+      socket.disconnect();
+      socket.connect();
+    } else {
+      socket.emit('watch', { roomIds: [categoryRoomId(category)] });
+    }
   }, [category]);
 
   useEffect(() => {
