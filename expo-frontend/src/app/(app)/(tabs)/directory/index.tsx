@@ -162,9 +162,9 @@ export default function DirectoryScreen() {
     <>
       {header}
       <LegendList
-        // A new column count or card height (the text size changed) needs a
-        // fresh layout pass; Legend List keeps the old row positions otherwise.
-        key={layout === 'grid' ? `grid-${columns}-${cardHeight}` : 'list'}
+        // A new column count or text size needs a fresh layout pass; Legend
+        // List keeps the old row positions, and text its old measurements.
+        key={layout === 'grid' ? `grid-${columns}-${fontScale}` : `list-${fontScale}`}
         data={items}
         keyExtractor={(item) => item.key}
         getItemType={(item) => item.kind}

@@ -122,6 +122,9 @@ export default function HomeScreen() {
       <View className="flex-1 bg-background">
         <HeroBackdrop scrollY={scrollY} height={heroHeight} />
         <Animated.ScrollView
+          // React Native keeps text measured at the old size when the system
+          // text size changes, leaving tall gaps; a fresh layout fixes it.
+          key={fontScale}
           onScroll={onScroll}
           scrollEventThrottle={16}
           // The hero runs under the status bar and the transparent header.
