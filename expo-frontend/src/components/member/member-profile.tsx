@@ -1,11 +1,9 @@
 import { Column, FieldGroup, Host, ListItem, RNHostView, Text } from '@expo/ui';
-import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Link, router } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { useState } from 'react';
-import { Linking, Pressable, Text as RNText, View } from 'react-native';
-import { toast } from 'sonner-native';
+import { Pressable, Text as RNText, View } from 'react-native';
 import { useUniwind } from 'uniwind';
 
 import { Avatar } from '@/components/avatar';
@@ -17,15 +15,7 @@ import type { Biodata } from '@/lib/api/types';
 import { professionLine, tradeOf } from '@/lib/biodata';
 import { openDirectMessage } from '@/lib/chat/navigation';
 import { resolveMediaUrl } from '@/lib/config';
-
-async function copy(text: string, what: string) {
-  await Clipboard.setStringAsync(text);
-  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  toast.success(`${what} copied`);
-}
-
-const openUrl = (url: string) =>
-  Linking.openURL(url).catch(() => toast.error('Couldn’t open that on this device.'));
+import { copyDetail as copy, openContactUrl as openUrl } from '@/lib/contact';
 
 /** A member's page from the directory, or the signed-in member's own. */
 export function MemberProfile({ member, isMe }: { member: Biodata; isMe: boolean }) {

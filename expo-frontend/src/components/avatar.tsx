@@ -27,9 +27,11 @@ export function Avatar({
       className="items-center justify-center overflow-hidden rounded-full bg-primary-soft"
       style={{ width: size, height: size }}>
       {uri ? (
-        <Image source={{ uri }} className="size-full" contentFit="cover" transition={150} />
+        // recyclingKey: in recycled list rows, never flash the previous member's photo.
+        <Image source={{ uri }} recyclingKey={uri} className="size-full" contentFit="cover" transition={150} />
       ) : (
-        <Text className="font-semibold text-on-primary" style={{ fontSize: size * 0.38 }}>
+        // Sized to the circle, so it doesn't grow with the text-size setting.
+        <Text allowFontScaling={false} className="font-semibold text-on-primary" style={{ fontSize: size * 0.38 }}>
           {initials(name) || '?'}
         </Text>
       )}
