@@ -1,5 +1,4 @@
 import { Column, FieldGroup, Host, ListItem, RNHostView, Text } from '@expo/ui';
-import * as Haptics from 'expo-haptics';
 import { Link, router } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { useState } from 'react';
@@ -10,6 +9,7 @@ import { Avatar } from '@/components/avatar';
 import { formModifiers, sectionModifiers } from '@/components/forms/form-modifiers';
 import { useFormColors, type FormColors } from '@/components/forms/form-rows';
 import { RowActions, rowPressHandler, type RowAction } from '@/components/member/row-actions';
+import { ActionTile } from '@/components/ui/action-tile';
 import { Icon, type IconName } from '@/components/ui/icon';
 import type { Biodata } from '@/lib/api/types';
 import { professionLine, tradeOf } from '@/lib/biodata';
@@ -135,23 +135,23 @@ function ProfileActions({
           <ActionTile
             label="Edit Profile"
             icon={{ ios: 'pencil', android: 'edit' }}
-            colors={colors}
+            color={colors.accent}
             onPress={() => router.push('/biodata-form')}
           />
         ) : (
           <>
-            <ActionTile label="Message" icon={{ ios: 'message.fill', android: 'chat' }} colors={colors} onPress={message} />
+            <ActionTile label="Message" icon={{ ios: 'message.fill', android: 'chat' }} color={colors.accent} onPress={message} />
             <ActionTile
               label="Call"
               icon={{ ios: 'phone.fill', android: 'call' }}
-              colors={colors}
+              color={colors.accent}
               onPress={() => void openUrl(`tel:${member.phoneNumber}`)}
             />
             {email ? (
               <ActionTile
                 label="Email"
                 icon={{ ios: 'envelope.fill', android: 'mail' }}
-                colors={colors}
+                color={colors.accent}
                 onPress={() => void openUrl(`mailto:${email}`)}
               />
             ) : null}
@@ -159,34 +159,6 @@ function ProfileActions({
         )}
       </View>
     </View>
-  );
-}
-
-/** A Contacts-style action button: icon over a short label. */
-function ActionTile({
-  label,
-  icon,
-  colors,
-  onPress,
-}: {
-  label: string;
-  icon: IconName;
-  colors: FormColors;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={() => {
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
-      }}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={{ borderCurve: 'continuous' }}
-      className="h-16 flex-1 items-center justify-center gap-1 rounded-xl bg-surface active:opacity-60">
-      <Icon name={icon} size={20} color={colors.accent} />
-      <RNText className="text-xs font-medium text-accent">{label}</RNText>
-    </Pressable>
   );
 }
 

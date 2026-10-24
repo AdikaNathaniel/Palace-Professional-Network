@@ -1,7 +1,5 @@
-import { PlaceholderScreen } from '@/components/placeholder-screen';
+import { Presentation } from '@/components/presentation/presentation';
 
 export default function PresentationScreen() {
-  return (
-    <PlaceholderScreen title="PPN Presentation" flutterSource="pages/presentation_page.dart" />
-  );
+  return <Presentation />;
 }

@@ -10,7 +10,7 @@ export async function copyDetail(text: string, what: string) {
   toast.success(`${what} copied`);
 }
 
-/** Opens a tel: / mailto: link, or says so if the device can't (e.g. no phone app). */
-export function openContactUrl(url: string) {
-  return Linking.openURL(url).catch(() => toast.error('Couldn’t open that on this device.'));
+/** Opens a tel: / mailto: / wa.me link, or says so if the device can't (e.g. no phone app). */
+export function openContactUrl(url: string, failure = 'Couldn’t open that on this device.') {
+  return Linking.openURL(url).catch(() => toast.error(failure));
 }

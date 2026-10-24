@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
+import { useCSSVariable } from 'uniwind';
 
 import { useMyBiodata } from '@/hooks/queries';
 import { useChatInbox } from '@/hooks/use-chat-inbox';
@@ -40,6 +41,7 @@ function useBiodataPrompt() {
 }
 
 export default function AppLayout() {
+  const surface = useCSSVariable('--color-surface') as string;
   useBiodataPrompt();
   useChatInbox();
 
@@ -66,6 +68,18 @@ export default function AppLayout() {
         }}
       />
       <Stack.Screen name="member/[id]" options={{ title: 'Member' }} />
+      <Stack.Screen
+        name="leader/[id]"
+        options={{
+          presentation: 'formSheet',
+          // Room for the photo and actions; long bios pull up to full height.
+          sheetAllowedDetents: [0.6, 1],
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 24,
+          headerShown: false,
+          contentStyle: { backgroundColor: surface },
+        }}
+      />
       <Stack.Screen name="account" options={{ title: 'Account' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="change-pin" options={{ title: 'Change PIN' }} />

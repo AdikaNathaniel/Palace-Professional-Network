@@ -1,6 +1,10 @@
 import { SymbolView, type AndroidSymbol, type SFSymbol, type SymbolViewProps } from 'expo-symbols';
 
-/** An SF Symbol on iOS and its Material Symbol twin on Android (and web). */
+/**
+ * An SF Symbol on iOS and its Material Symbol twin on Android (and web).
+ * Decorative: it sits beside a label or inside a labelled control, so
+ * screen readers skip it rather than read out the symbol's name.
+ */
 export type IconName = { ios: SFSymbol; android: AndroidSymbol };
 
 export function Icon({
@@ -23,6 +27,9 @@ export function Icon({
       tintColor={color}
       weight={weight}
       style={style}
+      accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no"
     />
   );
 }
