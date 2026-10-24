@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { Text, View } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { Button } from '@/components/ui/button';
+import { PinInput, type PinInputHandle } from '@/components/ui/pin-input';
 import { TextField } from '@/components/ui/text-field';
 import { authApi } from '@/lib/api/endpoints';
 import { registerSchema, type RegisterValues } from '@/lib/validation';
@@ -13,6 +15,8 @@ import { useSession } from '@/stores/session';
 export default function RegisterScreen() {
   const signIn = useSession((s) => s.signIn);
   const [error, setError] = useState<string | null>(null);
+  const pinRef = useRef<PinInputHandle>(null);
+  const confirmRef = useRef<PinInputHandle>(null);
 
   const {
     control,
@@ -23,20 +27,28 @@ export default function RegisterScreen() {
     defaultValues: { phoneNumber: '', fullName: '', pin: '', confirmPin: '' },
   });
 
-  const onSubmit = handleSubmit(async ({ phoneNumber, fullName, pin }) => {
-    setError(null);
-    try {
-      const session = await authApi.register({
-        phoneNumber,
-        pin,
-        fullName: fullName || undefined,
-      });
-      // New members go straight to the biodata form (see the (app) layout).
-      await signIn(session, { justRegistered: true });
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  });
+  // Built on each press: the callbacks reach for the PIN boxes' refs.
+  const onSubmit = () =>
+    handleSubmit(
+      async ({ phoneNumber, fullName, pin }) => {
+        setError(null);
+        try {
+          const session = await authApi.register({
+            phoneNumber,
+            pin,
+            fullName: fullName || undefined,
+          });
+          // New members go straight to the biodata form (see the (app) layout).
+          await signIn(session, { justRegistered: true });
+        } catch (e) {
+          setError((e as Error).message);
+        }
+      },
+      (invalid) => {
+        if (invalid.pin) pinRef.current?.shake();
+        else if (invalid.confirmPin) confirmRef.current?.shake();
+      },
+    )();
 
   return (
     <AuthShell subtitle="Create your account" error={error}>
@@ -67,6 +79,8 @@ export default function RegisterScreen() {
             autoComplete="name"
             textContentType="name"
             autoCapitalize="words"
+            returnKeyType="next"
+            onSubmitEditing={() => pinRef.current?.focus()}
             value={field.value}
             onChangeText={field.onChange}
             onBlur={field.onBlur}
@@ -78,33 +92,38 @@ export default function RegisterScreen() {
         control={control}
         name="pin"
         render={({ field }) => (
-          <TextField
-            label="Create a 4-digit PIN"
-            keyboardType="number-pad"
-            secureTextEntry
-            maxLength={4}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            error={errors.pin?.message}
-          />
+          <View className="gap-1.5">
+            <Text className="text-sm font-medium text-foreground">Create a 4-digit PIN</Text>
+            <PinInput
+              ref={pinRef}
+              label="New PIN"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              onComplete={() => confirmRef.current?.focus()}
+              editable={!isSubmitting}
+              error={errors.pin?.message}
+            />
+          </View>
         )}
       />
       <Controller
         control={control}
         name="confirmPin"
         render={({ field }) => (
-          <TextField
-            label="Confirm PIN"
-            keyboardType="number-pad"
-            secureTextEntry
-            maxLength={4}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            onSubmitEditing={onSubmit}
-            error={errors.confirmPin?.message}
-          />
+          <View className="gap-1.5">
+            <Text className="text-sm font-medium text-foreground">Confirm PIN</Text>
+            <PinInput
+              ref={confirmRef}
+              label="Confirm PIN"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              onComplete={() => confirmRef.current?.blur()}
+              editable={!isSubmitting}
+              error={errors.confirmPin?.message}
+            />
+          </View>
         )}
       />
       <Button title="Register" loading={isSubmitting} onPress={onSubmit} className="mt-2" />

@@ -83,6 +83,8 @@ export default function AppLayout() {
       <Stack.Screen name="account" options={{ title: 'Account' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="change-pin" options={{ title: 'Change PIN' }} />
+      <Stack.Screen name="privacy" options={{ title: 'Privacy Policy' }} />
+      <Stack.Screen name="delete-account" options={{ title: 'Delete Account' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="presentation" options={{ title: 'PPN Presentation' }} />
       {/* Its own stack (biodata-form/_layout.tsx) draws the header. */}

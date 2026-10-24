@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, Text, type PressableProps } from 'react-n
 
 type ButtonProps = Omit<PressableProps, 'children'> & {
   title: string;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'destructive';
   loading?: boolean;
   className?: string;
 };
@@ -12,12 +12,14 @@ const containers = {
   primary: 'bg-primary',
   secondary: 'bg-surface border border-border',
   ghost: 'bg-transparent',
+  destructive: 'bg-danger',
 };
 
 const labels = {
   primary: 'text-on-primary',
   secondary: 'text-foreground',
   ghost: 'text-accent',
+  destructive: 'text-on-primary',
 };
 
 export function Button({
@@ -42,7 +44,7 @@ export function Button({
       className={`h-14 flex-row items-center justify-center rounded-2xl px-6 active:opacity-80 ${containers[variant]} ${inactive ? 'opacity-60' : ''} ${className}`}
       {...rest}>
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : undefined} />
+        <ActivityIndicator color={variant === 'primary' || variant === 'destructive' ? '#ffffff' : undefined} />
       ) : (
         <Text className={`text-base font-semibold ${labels[variant]}`}>{title}</Text>
       )}

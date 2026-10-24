@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/components/placeholder-screen';
+import { ChangePinForm } from '@/components/account/change-pin-form';
 
 export default function ChangePinScreen() {
-  return <PlaceholderScreen title="Change PIN" flutterSource="pages/change_pin_page.dart" />;
+  return <ChangePinForm />;
 }

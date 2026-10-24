@@ -33,6 +33,11 @@ type RequestOptions = {
   body?: unknown;
   /** Skip the Authorization header (login, register, public endpoints). */
   anonymous?: boolean;
+  /**
+   * Off for endpoints that answer a wrong credential with 401 (change PIN),
+   * so the member sees the error instead of being signed out.
+   */
+  signOutOnUnauthorized?: boolean;
   signal?: AbortSignal;
 };
 
@@ -47,7 +52,7 @@ function messageFrom(body: unknown, fallback: string) {
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, anonymous, signal } = options;
+  const { method = 'GET', body, anonymous, signOutOnUnauthorized = true, signal } = options;
   const headers: Record<string, string> = { Accept: 'application/json' };
 
   const token = anonymous ? null : auth.getToken();
@@ -83,7 +88,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   if (!res.ok) {
-    if (res.status === 401 && token) {
+    if (res.status === 401 && token && signOutOnUnauthorized) {
       auth.onUnauthorized();
       throw new ApiError('Your session has expired. Please sign in again.', 401);
     }

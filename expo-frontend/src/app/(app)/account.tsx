@@ -1,18 +1,30 @@
-import { Link } from 'expo-router';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { FieldGroup, Host, ListItem, Text } from '@expo/ui';
+import { router } from 'expo-router';
+import { Alert, View } from 'react-native';
+import { useUniwind } from 'uniwind';
 
+import { Chevron, RowIcon, SettingsRow } from '@/components/account/settings-rows';
 import { Avatar } from '@/components/avatar';
-import { Button } from '@/components/ui/button';
+import { a11y, formModifiers, headlineFont, sectionModifiers } from '@/components/forms/form-modifiers';
+import { useFormColors } from '@/components/forms/form-rows';
 import { useMyBiodata } from '@/hooks/queries';
 import { useSession } from '@/stores/session';
 
-// TODO: port the rest of pages/account_page.dart (profile summary, delete account link).
 export default function AccountScreen() {
+  const colors = useFormColors();
+  const { theme } = useUniwind();
   const session = useSession((s) => s.session);
   const signOut = useSession((s) => s.signOut);
   const { data: mine } = useMyBiodata();
 
   const name = mine?.fullName || session?.fullName || session?.phoneNumber || '';
+  const phone = session?.phoneNumber ?? '';
+
+  // Members with a biodata see their directory profile; others fill it in.
+  const openProfile = () =>
+    mine?._id
+      ? router.push({ pathname: '/member/[id]', params: { id: mine._id } })
+      : router.push('/biodata-form');
 
   const confirmSignOut = () =>
     Alert.alert('Sign out?', 'You will need your phone number and PIN to sign back in.', [
@@ -22,26 +34,79 @@ export default function AccountScreen() {
     ]);
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      className="flex-1 bg-background"
-      contentContainerClassName="gap-4 p-4">
-      <View className="items-center gap-2 rounded-2xl border border-border bg-surface p-6">
-        <Avatar name={name} imageUrl={mine?.imageUrl} size={88} />
-        <Text className="text-lg font-semibold text-foreground">{name}</Text>
-        <Text className="text-sm text-muted">{session?.phoneNumber}</Text>
-      </View>
+    <View className="flex-1 bg-background">
+      <Host style={{ flex: 1 }} colorScheme={theme === 'dark' ? 'dark' : 'light'}>
+        <FieldGroup modifiers={formModifiers(colors.accent)}>
+          <FieldGroup.Section modifiers={sectionModifiers(colors.surface)}>
+            <ListItem
+              onPress={openProfile}
+              modifiers={a11y(
+                [name, phone, mine?.professionCategory].filter(Boolean).join(', '),
+                mine ? 'Opens your profile' : 'Opens the biodata form',
+              )}
+              leading={<Avatar name={name} imageUrl={mine?.imageUrl} size={60} />}
+              supportingText={
+                <Text textStyle={{ color: colors.muted }}>
+                  {[phone, mine?.professionCategory ?? 'Add your biodata to join the directory']
+                    .filter(Boolean)
+                    .join('\n')}
+                </Text>
+              }
+              trailing={<Chevron colors={colors} />}>
+              <Text textStyle={{ color: colors.foreground, fontWeight: '600' }} modifiers={headlineFont()}>
+                {name}
+              </Text>
+            </ListItem>
+          </FieldGroup.Section>
 
-      <Link href="/biodata-form" asChild>
-        <Button title={mine ? 'Edit my biodata' : 'Fill in my biodata'} variant="secondary" />
-      </Link>
-      <Link href="/settings" asChild>
-        <Button title="Settings" variant="secondary" />
-      </Link>
-      <Link href="/change-pin" asChild>
-        <Button title="Change PIN" variant="secondary" />
-      </Link>
-      <Button title="Sign out" variant="ghost" onPress={confirmSignOut} />
-    </ScrollView>
+          <FieldGroup.Section modifiers={sectionModifiers(colors.surface)}>
+            <SettingsRow
+              title="My Biodata"
+              icon={<RowIcon name={{ ios: 'person.text.rectangle.fill', android: 'badge' }} color={colors.primary} />}
+              colors={colors}
+              onPress={() => router.push('/biodata-form')}
+            />
+            <SettingsRow
+              title="Notifications"
+              icon={<RowIcon name={{ ios: 'bell.fill', android: 'notifications' }} color={colors.danger} />}
+              colors={colors}
+              onPress={() => router.push('/notifications')}
+            />
+            <SettingsRow
+              title="PPN Presentation"
+              icon={<RowIcon name={{ ios: 'play.rectangle.fill', android: 'slideshow' }} color={colors.accent} />}
+              colors={colors}
+              onPress={() => router.push('/presentation')}
+            />
+            <SettingsRow
+              title="Settings"
+              icon={<RowIcon name={{ ios: 'gearshape.fill', android: 'settings' }} color={colors.muted} />}
+              colors={colors}
+              onPress={() => router.push('/settings')}
+            />
+          </FieldGroup.Section>
+
+          <FieldGroup.Section modifiers={sectionModifiers(colors.surface)}>
+            <SettingsRow
+              title="Sign Out"
+              kind="destructive"
+              colors={colors}
+              accessibilityHint="Asks to confirm first"
+              onPress={confirmSignOut}
+            />
+          </FieldGroup.Section>
+
+          <FieldGroup.Section modifiers={sectionModifiers(colors.surface)}>
+            <SettingsRow
+              title="Delete Account"
+              detail="See what’s removed and email a deletion request"
+              kind="destructive"
+              colors={colors}
+              onPress={() => router.push('/delete-account')}
+            />
+          </FieldGroup.Section>
+        </FieldGroup>
+      </Host>
+    </View>
   );
 }

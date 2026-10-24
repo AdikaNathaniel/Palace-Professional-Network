@@ -10,3 +10,7 @@ export function sectionModifiers(_rowColor: string): undefined {
 export function a11y(_label: string, _hint?: string): undefined {
   return undefined;
 }
+
+export function headlineFont(): undefined {
+  return undefined;
+}

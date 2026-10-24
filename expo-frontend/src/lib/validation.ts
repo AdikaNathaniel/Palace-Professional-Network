@@ -24,8 +24,24 @@ export const registerSchema = z
     message: 'PINs do not match',
   });
 
+export const changePinSchema = z
+  .object({
+    currentPin: z.string().regex(/^\d{4}$/, 'Enter your current 4-digit PIN'),
+    newPin: pin,
+    confirmPin: z.string().regex(/^\d{4}$/, 'Please confirm your new PIN'),
+  })
+  .refine((v) => v.newPin !== v.currentPin, {
+    path: ['newPin'],
+    message: 'Choose a PIN that’s different from your current one',
+  })
+  .refine((v) => v.newPin === v.confirmPin, {
+    path: ['confirmPin'],
+    message: 'PINs do not match',
+  });
+
 export type SignInValues = z.infer<typeof signInSchema>;
 export type RegisterValues = z.infer<typeof registerSchema>;
+export type ChangePinValues = z.infer<typeof changePinSchema>;
 
 /**
  * Mirrors the backend's CreateBiodataDto: the choices must be ones the server

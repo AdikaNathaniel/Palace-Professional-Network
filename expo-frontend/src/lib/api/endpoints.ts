@@ -35,8 +35,9 @@ export const authApi = {
   register: (body: { phoneNumber: string; pin: string; fullName?: string }) =>
     request<UserSession>('/auth/register', { method: 'POST', body, anonymous: true }),
 
+  /** A wrong current PIN comes back as 401 "Current PIN is incorrect.". */
   changePin: (body: { currentPin: string; newPin: string }) =>
-    request<void>('/auth/change-pin', { method: 'POST', body }),
+    request<void>('/auth/change-pin', { method: 'POST', body, signOutOnUnauthorized: false }),
 };
 
 export const biodataApi = {

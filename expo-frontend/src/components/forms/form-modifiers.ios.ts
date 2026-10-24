@@ -1,6 +1,7 @@
 import {
   accessibilityHint,
   accessibilityLabel,
+  font,
   listRowBackground,
   scrollContentBackground,
   scrollDismissesKeyboard,
@@ -24,4 +25,12 @@ export function sectionModifiers(rowColor: string) {
 /** What VoiceOver reads for a control whose visible label sits beside it. */
 export function a11y(label: string, hint?: string) {
   return hint ? [accessibilityLabel(label), accessibilityHint(hint)] : [accessibilityLabel(label)];
+}
+
+/**
+ * The headline text style, so emphasised text still follows Dynamic Type
+ * (a bare weight would pin it to a fixed size).
+ */
+export function headlineFont() {
+  return [font({ textStyle: 'headline' })];
 }

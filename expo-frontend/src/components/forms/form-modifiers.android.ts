@@ -16,3 +16,8 @@ export function sectionModifiers(_rowColor: string): undefined {
 export function a11y(label: string, hint?: string) {
   return [semantics({ contentDescription: hint ? `${label}. ${hint}` : label })];
 }
+
+/** Compose sizes text in sp, so a weight in textStyle already scales. */
+export function headlineFont(): undefined {
+  return undefined;
+}
