@@ -1,0 +1,34 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+/* Brand colours shared by both themes (from the Flutter app's AppColors). */
+@theme static {
+  --color-primary: #7c3aed;
+  --color-primary-soft: #a78bfa;
+  --color-primary-deep: #5b21b6;
+  --color-on-primary: #ffffff;
+  --color-danger: #dc2626;
+}
+
+/* Colours that change between light and dark mode (Flutter's AppPalette). */
+@layer theme {
+  :root {
+    @variant light {
+      --color-background: #f5f3ff;
+      --color-surface: #ffffff;
+      --color-border: #ddd6fe;
+      --color-foreground: #1e1b2e;
+      --color-muted: #6b7280;
+      /* Violet for text and accents on background/surface. */
+      --color-accent: #5b21b6;
+    }
+    @variant dark {
+      --color-background: #14121c;
+      --color-surface: #221e2e;
+      --color-border: #3b3452;
+      --color-foreground: #f1eef9;
+      --color-muted: #a1a1b5;
+      --color-accent: #c4b5fd;
+    }
+  }
+}
