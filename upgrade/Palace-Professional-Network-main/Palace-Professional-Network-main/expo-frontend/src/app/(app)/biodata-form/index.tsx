@@ -1,7 +1,5 @@
-import { router } from 'expo-router';
-import { Stack } from 'expo-router/stack';
-
 import { BiodataForm } from '@/components/biodata/biodata-form';
+import { FormHeader } from '@/components/biodata/form-header';
 import { BiodataFormSkeleton } from '@/components/biodata/biodata-form-skeleton';
 import { QueryState } from '@/components/query-state';
 import { useBiodataOptions, useMyBiodata } from '@/hooks/queries';
@@ -42,12 +40,5 @@ export default function BiodataFormScreen() {
 
 /** Header for the loading and error states: a way out, and the title. */
 function CancelOnly() {
-  return (
-    <>
-      <Stack.Screen.Title>My Biodata</Stack.Screen.Title>
-      <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button onPress={() => router.back()}>Cancel</Stack.Toolbar.Button>
-      </Stack.Toolbar>
-    </>
-  );
+  return <FormHeader title="My Biodata" />;
 }

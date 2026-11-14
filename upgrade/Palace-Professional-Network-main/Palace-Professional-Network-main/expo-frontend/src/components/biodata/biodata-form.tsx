@@ -4,14 +4,14 @@ import { useMutation } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { router, useNavigation } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { Stack } from 'expo-router/stack';
 import { useEffect, useRef, useState } from 'react';
 import { useForm, useFormState, useWatch } from 'react-hook-form';
-import { ActivityIndicator, Alert, Pressable, Text as RNText, View } from 'react-native';
+import { Alert, Pressable, Text as RNText, View } from 'react-native';
 import { toast } from 'sonner-native';
 import { useUniwind } from 'uniwind';
 
 import { Avatar } from '@/components/avatar';
+import { FormHeader } from '@/components/biodata/form-header';
 import { formModifiers, sectionModifiers } from '@/components/forms/form-modifiers';
 import { ChoiceRow, PickerRow, SectionNote, TextRow, useFormColors } from '@/components/forms/form-rows';
 import { Icon } from '@/components/ui/icon';
@@ -182,23 +182,10 @@ export function BiodataForm({
 
   return (
     <>
-      <Stack.Screen.Title>{existing ? 'Edit Biodata' : 'My Biodata'}</Stack.Screen.Title>
-      <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button onPress={() => router.back()}>Cancel</Stack.Toolbar.Button>
-      </Stack.Toolbar>
-      <Stack.Toolbar placement="right">
-        {save.isPending ? (
-          <Stack.Toolbar.View>
-            <View className="h-8 w-12 items-center justify-center" accessibilityLabel="Saving">
-              <ActivityIndicator />
-            </View>
-          </Stack.Toolbar.View>
-        ) : (
-          <Stack.Toolbar.Button variant="done" disabled={!canSave} onPress={submit}>
-            Save
-          </Stack.Toolbar.Button>
-        )}
-      </Stack.Toolbar>
+      <FormHeader
+        title={existing ? 'Edit Biodata' : 'My Biodata'}
+        save={{ onPress: submit, enabled: canSave, changed, saving: save.isPending }}
+      />
 
       <View className="flex-1 bg-background">
         <Host style={{ flex: 1 }} colorScheme={theme === 'dark' ? 'dark' : 'light'}>
