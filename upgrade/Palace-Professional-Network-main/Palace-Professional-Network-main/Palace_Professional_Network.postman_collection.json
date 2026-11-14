@@ -1,0 +1,166 @@
+{
+  "info": {
+    "name": "Palace Professional Network API",
+    "description": "Backend deployed on Render.\n\nRun **Auth > Register** (new number) or **Auth > Login** first; either one saves the returned JWT into the `token` collection variable, which every protected request uses as a Bearer token.\n\nEdit `phoneNumber` and `pin` under the collection's Variables tab. The first request after ~15 min idle can take about a minute while the free Render service wakes up.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://palace-professional-network.onrender.com" },
+    { "key": "phoneNumber", "value": "0240000000" },
+    { "key": "pin", "value": "1234" },
+    { "key": "newPin", "value": "5678" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 2xx', () => pm.response.to.be.success);",
+                  "const body = pm.response.json();",
+                  "if (body.token) { pm.collectionVariables.set('token', body.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"pin\": \"{{pin}}\",\n  \"fullName\": \"Test User\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Creates an account. phoneNumber: 7-20 chars of digits, +, space or -. pin: exactly 4 digits. fullName is optional. Returns { phoneNumber, fullName, token }."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 2xx', () => pm.response.to.be.success);",
+                  "const body = pm.response.json();",
+                  "if (body.token) { pm.collectionVariables.set('token', body.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"pin\": \"{{pin}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Returns { phoneNumber, fullName, token } and saves the token for the other requests."
+          }
+        },
+        {
+          "name": "Change PIN",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPin\": \"{{pin}}\",\n  \"newPin\": \"{{newPin}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/change-pin",
+            "description": "Requires login. This really changes the account's PIN; afterwards update the `pin` variable to the new value (or swap the values and run again to change it back)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Biodata",
+      "item": [
+        {
+          "name": "Get form options (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/biodata/options",
+            "description": "No login needed. Lists the allowed values for ageRange, gender, maritalStatus, professionCategory and sub-categories."
+          }
+        },
+        {
+          "name": "Create / update my biodata",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "fullName", "value": "Test User", "type": "text" },
+                { "key": "ageRange", "value": "26-35", "type": "text" },
+                { "key": "gender", "value": "Male", "type": "text" },
+                { "key": "maritalStatus", "value": "Single", "type": "text" },
+                { "key": "email", "value": "test@example.com", "type": "text" },
+                { "key": "phoneNumber", "value": "{{phoneNumber}}", "type": "text", "description": "Required by validation, but the server overwrites it with the logged-in number." },
+                { "key": "professionCategory", "value": "Engineers and Architects", "type": "text" },
+                { "key": "professionSubCategory", "value": "", "type": "text", "disabled": true, "description": "Optional; must be one of the sub-categories from Get form options." },
+                { "key": "placeOfWork", "value": "Accra", "type": "text" },
+                { "key": "image", "type": "file", "src": [], "disabled": true, "description": "Optional profile photo: jpg/jpeg/png, max 5 MB. Enable and pick a file to test uploads." }
+              ]
+            },
+            "url": "{{baseUrl}}/biodata",
+            "description": "Requires login. Multipart form. Values for ageRange, gender, maritalStatus and professionCategory must match Get form options exactly."
+          }
+        },
+        {
+          "name": "Get my biodata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/biodata/me",
+            "description": "Requires login. Returns the biodata for the logged-in phone number."
+          }
+        },
+        {
+          "name": "Get all biodata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/biodata",
+            "description": "Requires login. Returns every member's biodata."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Get my DM rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/chat/dm-rooms",
+            "description": "Requires login. Lists the logged-in user's direct-message rooms. Live messages use Socket.IO (events: join, leave, message), which this collection can't send; use a Postman Socket.IO request for that."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -101,7 +101,7 @@ class _PresentationPageState extends State<PresentationPage> {
   Widget build(BuildContext context) {
     final total = _slides.length;
     return Scaffold(
-      appBar: AppBar(title: const Text('PPN Presentation')),
+      appBar: AppBar(title: const Text('Palace Professional Network')),
       body: Column(
         children: [
           Expanded(

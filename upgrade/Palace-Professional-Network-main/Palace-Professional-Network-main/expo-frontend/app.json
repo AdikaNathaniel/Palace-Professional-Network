@@ -1,0 +1,66 @@
+{
+  "expo": {
+    "name": "Palace Professional Network",
+    "slug": "palace-professional-network",
+    "version": "1.0.25",
+    "orientation": "portrait",
+    "icon": "./assets/images/app_icon.png",
+    "scheme": "ppn",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.ipc.palace.palaceProfessionalNetwork"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1A1A1A",
+        "foregroundImage": "./assets/images/android-icon-foreground-clear.png",
+        "backgroundImage": "./assets/images/app_icon.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.ipc.palace.palace_professional_network",
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 29,
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F5F3FF",
+          "image": "./assets/images/app_icon.png",
+          "imageWidth": 120,
+          "dark": {
+            "backgroundColor": "#14121C",
+            "image": "./assets/images/app_icon.png"
+          }
+        }
+      ],
+      "expo-secure-store",
+      "expo-audio",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "dynamic"
+          }
+        }
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
+      "expo-asset",
+      "./plugins/with-chat-notifications"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

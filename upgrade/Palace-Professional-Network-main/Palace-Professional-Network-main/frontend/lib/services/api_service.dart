@@ -1,0 +1,197 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
+import '../config/api_config.dart';
+import '../models/biodata.dart';
+import '../models/chat_message.dart';
+
+class ApiException implements Exception {
+  final String message;
+  ApiException(this.message);
+  @override
+  String toString() => message;
+}
+
+class ApiService {
+  static String get _base => ApiConfig.baseUrl;
+
+  /// Set on login/register and cleared on logout (see AuthGate in main.dart).
+  /// The biodata endpoints require this; /biodata/options does not.
+  static String? authToken;
+
+  static Map<String, String> get _authHeaders =>
+      authToken != null ? {'Authorization': 'Bearer $authToken'} : {};
+
+  static Future<BiodataOptions> fetchOptions() async {
+    final res = await http.get(Uri.parse('$_base/biodata/options'));
+    if (res.statusCode != 200) {
+      throw ApiException('Failed to load form options (${res.statusCode}).');
+    }
+    return BiodataOptions.fromJson(
+      jsonDecode(res.body) as Map<String, dynamic>,
+    );
+  }
+
+  /// The logged-in user's own biodata record, if they've submitted one
+  /// before (matched server-side by phone number) - null for a first-time
+  /// submitter.
+  static Future<Biodata?> fetchMine() async {
+    final res = await http.get(
+      Uri.parse('$_base/biodata/me'),
+      headers: _authHeaders,
+    );
+    if (res.statusCode == 401) {
+      throw ApiException('Your session has expired. Please log in again.');
+    }
+    if (res.statusCode != 200) {
+      throw ApiException('Failed to load your biodata (${res.statusCode}).');
+    }
+    // No record: the gateway replies 200 with an empty body (Nest sends
+    // nothing for a null result), which jsonDecode would choke on.
+    if (res.body.trim().isEmpty) return null;
+    final body = jsonDecode(res.body);
+    if (body == null) return null;
+    return Biodata.fromJson(body as Map<String, dynamic>);
+  }
+
+  static Future<List<Biodata>> fetchAll() async {
+    final res = await http.get(
+      Uri.parse('$_base/biodata'),
+      headers: _authHeaders,
+    );
+    if (res.statusCode == 401) {
+      throw ApiException('Your session has expired. Please log in again.');
+    }
+    if (res.statusCode != 200) {
+      throw ApiException('Failed to load directory (${res.statusCode}).');
+    }
+    final list = jsonDecode(res.body) as List;
+    return list
+        .map((e) => Biodata.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  static Future<void> submit({
+    required String fullName,
+    required String ageRange,
+    required String gender,
+    required String maritalStatus,
+    String? email,
+    required String phoneNumber,
+    required String professionCategory,
+    String? professionSubCategory,
+    required String placeOfWork,
+    XFile? imageFile,
+  }) async {
+    final uri = Uri.parse('$_base/biodata');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers.addAll(_authHeaders)
+      ..fields['fullName'] = fullName
+      ..fields['ageRange'] = ageRange
+      ..fields['gender'] = gender
+      ..fields['maritalStatus'] = maritalStatus
+      ..fields['phoneNumber'] = phoneNumber
+      ..fields['professionCategory'] = professionCategory
+      ..fields['placeOfWork'] = placeOfWork;
+
+    if (email != null && email.trim().isNotEmpty) {
+      request.fields['email'] = email.trim();
+    }
+    if (professionSubCategory != null && professionSubCategory.isNotEmpty) {
+      request.fields['professionSubCategory'] = professionSubCategory;
+    }
+    if (imageFile != null) {
+      final bytes = await imageFile.readAsBytes();
+      final name = imageFile.name.toLowerCase();
+      final type = name.endsWith('.png')
+          ? 'png'
+          : name.endsWith('.webp')
+          ? 'webp'
+          : 'jpeg';
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'image',
+          bytes,
+          filename: imageFile.name,
+          contentType: MediaType('image', type),
+        ),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final res = await http.Response.fromStream(streamedResponse);
+    if (res.statusCode != 201 && res.statusCode != 200) {
+      String message = 'Submission failed (${res.statusCode}).';
+      try {
+        final body = jsonDecode(res.body);
+        if (body is Map && body['message'] != null) {
+          message = body['message'] is List
+              ? (body['message'] as List).join(', ')
+              : body['message'].toString();
+        }
+      } catch (_) {}
+      throw ApiException(message);
+    }
+  }
+
+  static Future<void> changePin({
+    required String currentPin,
+    required String newPin,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$_base/auth/change-pin'),
+      headers: {'Content-Type': 'application/json', ..._authHeaders},
+      body: jsonEncode({'currentPin': currentPin, 'newPin': newPin}),
+    );
+    if (res.statusCode == 401) {
+      throw ApiException('Your session has expired. Please log in again.');
+    }
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      String message = 'Failed to change PIN (${res.statusCode}).';
+      try {
+        final body = jsonDecode(res.body);
+        if (body is Map && body['message'] != null) {
+          message = body['message'] is List
+              ? (body['message'] as List).join(', ')
+              : body['message'].toString();
+        }
+      } catch (_) {}
+      throw ApiException(message);
+    }
+  }
+
+  static Future<List<DmRoomPreview>> fetchDmRooms() async {
+    final res = await http.get(
+      Uri.parse('$_base/chat/dm-rooms'),
+      headers: _authHeaders,
+    );
+    if (res.statusCode == 401) {
+      throw ApiException('Your session has expired. Please log in again.');
+    }
+    if (res.statusCode != 200) {
+      throw ApiException('Failed to load conversations (${res.statusCode}).');
+    }
+    final list = jsonDecode(res.body) as List;
+    return list
+        .map((e) => DmRoomPreview.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  static Future<UnreadCounts> fetchUnreadCounts() async {
+    final res = await http.get(
+      Uri.parse('$_base/chat/unread'),
+      headers: _authHeaders,
+    );
+    if (res.statusCode != 200) {
+      throw ApiException('Failed to load unread messages (${res.statusCode}).');
+    }
+    return UnreadCounts.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  static String resolveImageUrl(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) return '';
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return '$_base$imageUrl';
+  }
+}

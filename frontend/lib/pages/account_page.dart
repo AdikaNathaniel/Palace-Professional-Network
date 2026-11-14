@@ -138,7 +138,7 @@ class AccountPageState extends State<AccountPage> {
             ),
             _item(
               icon: Icons.slideshow_outlined,
-              title: 'PPN Presentation',
+              title: 'Palace Professional Network',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const PresentationPage()),
               ),
